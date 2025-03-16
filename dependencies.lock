@@ -1,0 +1,29 @@
+dependencies:
+  esp-network-support:
+    dependencies:
+    - name: idf
+      version: '>=5.3'
+    - name: esp-support
+      path: ../esp-support
+    source:
+      path: C:\Projects\esp-libs\esp-network-support
+      type: local
+    version: 0.1.0
+  esp-support:
+    dependencies:
+    - name: idf
+      version: '>=5.3'
+    source:
+      path: C:\Projects\esp-libs\esp-support
+      type: local
+    version: 0.1.0
+  idf:
+    source:
+      type: idf
+    version: 5.3.2
+direct_dependencies:
+- esp-network-support
+- idf
+manifest_hash: da75d38eee5a7efcd9249539576a37146af8fd3a72bd8ef184c504531193623b
+target: esp32s3
+version: 2.0.0

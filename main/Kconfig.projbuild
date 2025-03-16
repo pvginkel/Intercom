@@ -1,0 +1,83 @@
+menu "Device Configuration"
+
+    orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
+
+    config WIFI_SSID
+        string "WiFi SSID"
+
+    config MQTT_BROKER_URL
+        string "MQTT broker URL"
+
+    config MQTT_USER_ID
+        string "MQTT user ID"
+
+    config DEVICE_CONFIG_ENDPOINT
+        string "Device config endpoint (%s becomes MAC address)"
+
+    config DEVICE_NETWORK_CONNECT_ATTEMPTS
+        int "Network connection attempts"
+        default 1
+
+    config DEVICE_RESTART_ON_FAILURE_INTERVAL
+        int "Timeout after which the device restarts when on the error screen in seconds"
+        default 300
+
+    config DEVICE_PB_PIN
+        int "Push button pin"
+        default -1
+
+    config DEVICE_LR_PIN
+        int "Red led pin"
+        default -1
+
+    config DEVICE_LG_PIN
+        int "Green led pin"
+        default -1
+
+    config DEVICE_WS_PIN
+        int "I2S word select pin"
+        default -1
+
+    config DEVICE_SCK_PIN
+        int "I2S clock pin"
+        default -1
+
+    config DEVICE_SDO_PIN
+        int "I2S data output pin"
+        default -1
+
+    config DEVICE_SDI_PIN
+        int "I2S data input pin"
+        default -1
+
+endmenu
+
+menu "OTA Configuration"
+
+    config OTA_ENDPOINT
+        string "OTA endpoint"
+
+    config OTA_CHECK_INTERVAL
+        int "OTA check Interval in seconds"
+        default 300
+
+    config OTA_RECV_TIMEOUT
+        int "OTA receive timeout in ms"
+        default 15000
+
+endmenu
+
+menu "Logging Configuration"
+
+    config LOG_ENDPOINT
+        string "Logging endpoint"
+
+    config LOG_INTERVAL
+        int "Interval to upload log messages in ms"
+        default 5000
+
+    config LOG_RECV_TIMEOUT
+        int "Logging receive timeout in ms"
+        default 15000
+
+endmenu

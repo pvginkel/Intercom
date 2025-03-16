@@ -35,20 +35,28 @@ menu "Device Configuration"
         int "Green led pin"
         default -1
 
-    config DEVICE_WS_PIN
-        int "I2S word select pin"
+    config DEVICE_MICROPHONE_WS_PIN
+        int "I2S microphones word select pin"
         default -1
 
-    config DEVICE_SCK_PIN
-        int "I2S clock pin"
+    config DEVICE_MICROPHONE_SCK_PIN
+        int "I2S microphones clock pin"
         default -1
 
-    config DEVICE_SDO_PIN
-        int "I2S data output pin"
+    config DEVICE_MICROPHONE_DATA_PIN
+        int "I2S microphones data pin"
         default -1
 
-    config DEVICE_SDI_PIN
-        int "I2S data input pin"
+    config DEVICE_SPEAKER_WS_PIN
+        int "I2S speaker word select pin"
+        default -1
+
+    config DEVICE_SPEAKER_SCK_PIN
+        int "I2S speaker clock pin"
+        default -1
+
+    config DEVICE_SPEAKER_DATA_PIN
+        int "I2S speaker data pin"
         default -1
 
 endmenu

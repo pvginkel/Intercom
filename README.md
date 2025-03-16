@@ -2,8 +2,16 @@
 
 PB = purple = 33
 LR = orange = 18
-WS = green = 13
-SCK = blue = 14
-SDO = yellow = 16
 LG = orange = 17
-DIN = yellow = 15
+
+Speaker
+
+LRC = green = 13
+BCLK = blue = 14
+SDI = yellow = 15
+
+Microphone
+
+WS = green = 35
+SCK = blue = 36
+SDO = yellow = 37

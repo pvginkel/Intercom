@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Controls.h"
+#include "Device.h"
 #include "DeviceConfiguration.h"
 #include "LogManager.h"
 #include "NetworkConnection.h"
@@ -14,6 +15,7 @@ class Application {
     DeviceConfiguration _configuration;
     LogManager _log_manager;
     Controls _controls;
+    Device _device;
 
 public:
     Application();
@@ -27,5 +29,5 @@ private:
     void begin_network();
     void begin_network_available();
     void begin_after_initialization();
-    void begin_ui();
+    void begin_app();
 };

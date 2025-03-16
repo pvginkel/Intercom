@@ -50,7 +50,7 @@ int getisoweek(tm& time_info);
 bool iequals(const string& a, const string& b);
 int hextoi(char c);
 
-#define LOG_TAG(v) static const char* TAG = #v
+#define LOG_TAG(v) [[maybe_unused]] static const char* TAG = #v
 
 class cJSON_Data {
     cJSON* _data;

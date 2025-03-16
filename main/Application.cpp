@@ -91,10 +91,14 @@ void Application::begin_after_initialization() {
     // Enable the buttons.
     _controls.begin();
 
-    begin_ui();
+    begin_app();
 }
 
-void Application::begin_ui() { ESP_LOGI(TAG, "TODO"); }
+void Application::begin_app() {
+    ESP_LOGI(TAG, "Startup complete");
+
+    _device.begin();
+}
 
 void Application::process() {
     _queue.process();

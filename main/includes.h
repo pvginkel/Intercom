@@ -20,6 +20,7 @@ using namespace std;
 
 #include "Callback.h"
 #include "driver/gpio.h"
+#include "driver/i2s_std.h"
 #include "esp_err.h"
 #include "esp_http_client.h"
 #include "esp_log.h"

@@ -2,9 +2,6 @@ menu "Device Configuration"
 
     orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
 
-    config WIFI_SSID
-        string "WiFi SSID"
-
     config MQTT_BROKER_URL
         string "MQTT broker URL"
 
@@ -21,6 +18,10 @@ menu "Device Configuration"
     config DEVICE_RESTART_ON_FAILURE_INTERVAL
         int "Timeout after which the device restarts when on the error screen in seconds"
         default 300
+
+    config DEVICE_LONG_PRESS_MS
+        int "Press duration for long press in ms"
+        default 500
 
     config DEVICE_PB_PIN
         int "Push button pin"
@@ -49,35 +50,5 @@ menu "Device Configuration"
     config DEVICE_SDI_PIN
         int "I2S data input pin"
         default -1
-
-endmenu
-
-menu "OTA Configuration"
-
-    config OTA_ENDPOINT
-        string "OTA endpoint"
-
-    config OTA_CHECK_INTERVAL
-        int "OTA check Interval in seconds"
-        default 300
-
-    config OTA_RECV_TIMEOUT
-        int "OTA receive timeout in ms"
-        default 15000
-
-endmenu
-
-menu "Logging Configuration"
-
-    config LOG_ENDPOINT
-        string "Logging endpoint"
-
-    config LOG_INTERVAL
-        int "Interval to upload log messages in ms"
-        default 5000
-
-    config LOG_RECV_TIMEOUT
-        int "Logging receive timeout in ms"
-        default 15000
 
 endmenu

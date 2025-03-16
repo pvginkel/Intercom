@@ -2,8 +2,7 @@
 
 #include "Application.h"
 
-extern "C" {
-void app_main(void) {
+extern "C" void app_main(void) {
     // If we've restarted because of a brownout or watchdog reset,
     // perform a silent startup.
     const auto resetReason = esp_reset_reason();
@@ -15,6 +14,7 @@ void app_main(void) {
 
     while (1) {
         application.process();
+
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
-}
 }

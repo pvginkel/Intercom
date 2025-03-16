@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Buttons.h"
+#include "Controls.h"
 #include "DeviceConfiguration.h"
 #include "LogManager.h"
 #include "NetworkConnection.h"
@@ -13,7 +13,7 @@ class Application {
     Queue _queue;
     DeviceConfiguration _configuration;
     LogManager _log_manager;
-    Buttons _buttons;
+    Controls _controls;
 
 public:
     Application();

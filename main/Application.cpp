@@ -8,12 +8,26 @@
 
 LOG_TAG(Application);
 
-Application::Application() : _network_connection(&_queue, CONFIG_DEVICE_NETWORK_CONNECT_ATTEMPTS), _buttons(&_queue) {}
+Application::Application() : _network_connection(&_queue, CONFIG_DEVICE_NETWORK_CONNECT_ATTEMPTS), _controls(&_queue) {}
+
+static bool green_on = false;
+static bool red_on = false;
 
 void Application::begin(bool silent) {
     ESP_LOGI(TAG, "Setting up the log manager");
 
     _log_manager.begin();
+
+    _controls.begin();
+
+    _controls.on_press([this]() {
+        green_on = !green_on;
+        _controls.set_green_led(green_on);
+    });
+    _controls.on_long_press([this]() {
+        red_on = !red_on;
+        _controls.set_red_led(red_on);
+    });
 
     setup_flash();
 
@@ -45,7 +59,7 @@ void Application::begin_network() {
         }
     });
 
-    _network_connection.begin(CONFIG_WIFI_SSID, CONFIG_WIFI_PASSWORD);
+    _network_connection.begin(CONFIG_WIFI_PASSWORD);
 }
 
 void Application::begin_network_available() {
@@ -75,11 +89,14 @@ void Application::begin_after_initialization() {
     ESP_LOGI(TAG, "esp_reset_reason: %s (%d)", esp_reset_reason_to_name(reset_reason), reset_reason);
 
     // Enable the buttons.
-    _buttons.begin();
+    _controls.begin();
 
     begin_ui();
 }
 
 void Application::begin_ui() { ESP_LOGI(TAG, "TODO"); }
 
-void Application::process() { _queue.process(); }
+void Application::process() {
+    _queue.process();
+    _controls.update();
+}

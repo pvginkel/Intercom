@@ -67,7 +67,7 @@ void Device::begin() {
 #define EXAMPLE_BUFF_SIZE 2048
 #define SAMPLE_RATE 16000
 #define FREQUENCY 300
-#define AMPLITUDE 1400  // Amplitude for 16-bit PCM
+#define AMPLITUDE ((int16_t)(INT16_MAX * 0.045))
 
 void Device::read_task() {
     uint8_t *r_buf = (uint8_t *)calloc(1, EXAMPLE_BUFF_SIZE);

@@ -64,7 +64,9 @@
       "format": "cpp",
       "cctype": "cpp",
       "span": "cpp",
-      "cstdint": "cpp"
+      "cstdint": "cpp",
+      "cstddef": "cpp",
+      "optional": "cpp"
     }
   }
 }

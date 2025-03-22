@@ -1,10 +1,17 @@
 #pragma once
 
-#ifdef LV_SIMULATOR
-#include <ctime>
-#endif
-
 #include "cJSON.h"
+#include "sdkconfig.h"
+
+#define __CONCAT3(a, b, c) a##b##c
+#define CONCAT3(a, b, c) __CONCAT3(a, b, c)
+
+#define CONFIG_DEVICE_I2S_DATA_BIT_WIDTH CONCAT3(I2S_DATA_BIT_WIDTH_, CONFIG_DEVICE_I2S_BITS_PER_SAMPLE, BIT)
+
+#define CONFIG_DEVICE_AUDIO_BUFFER_LEN \
+    (CONFIG_DEVICE_I2S_BITS_PER_SAMPLE / 8 * CONFIG_DEVICE_I2S_SAMPLE_RATE * CONFIG_DEVICE_AUDIO_BUFFER_MS / 1000)
+#define CONFIG_DEVICE_AUDIO_CHUNK_LEN \
+    (CONFIG_DEVICE_I2S_BITS_PER_SAMPLE / 8 * CONFIG_DEVICE_I2S_SAMPLE_RATE * CONFIG_DEVICE_AUDIO_CHUNK_MS / 1000)
 
 #define esp_get_millis() uint32_t(esp_timer_get_time() / 1000ull)
 

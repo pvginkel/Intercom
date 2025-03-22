@@ -24,6 +24,19 @@ void Controls::begin() {
 }
 
 void Controls::update() {
+    if (_red_led_runner && !_red_led_runner->update()) {
+        delete _red_led_runner;
+        _red_led_runner = nullptr;
+
+        _red_led_active_changed.call(false);
+    }
+    if (_green_led_runner && !_green_led_runner->update()) {
+        delete _green_led_runner;
+        _green_led_runner = nullptr;
+
+        _green_led_active_changed.call(false);
+    }
+
     _button.update();
 
     const auto millis = esp_get_millis();
@@ -43,6 +56,45 @@ void Controls::update() {
     }
 }
 
-void Controls::set_red_led(bool on) { gpio_set_level((gpio_num_t)CONFIG_DEVICE_LR_PIN, on); }
+void Controls::set_red_led(LedAction* action) {
+    _red_led_active_changed.call(true);
 
-void Controls::set_green_led(bool on) { gpio_set_level((gpio_num_t)CONFIG_DEVICE_LG_PIN, on); }
+    if (_red_led_runner) {
+        delete _red_led_runner;
+    }
+
+    _red_led_runner = create_led_action_runner(action, (gpio_num_t)CONFIG_DEVICE_LR_PIN);
+}
+
+void Controls::set_green_led(LedAction* action) {
+    _green_led_active_changed.call(true);
+
+    if (_green_led_runner) {
+        delete _green_led_runner;
+    }
+
+    _green_led_runner = create_led_action_runner(action, (gpio_num_t)CONFIG_DEVICE_LG_PIN);
+}
+
+LedActionRunner* Controls::create_led_action_runner(LedAction* action, gpio_num_t pin) {
+    LedActionRunner* runner;
+
+    switch (action->state) {
+        case LedState::On:
+            runner = new LedOnActionRunner(action);
+            break;
+        case LedState::Off:
+            runner = new LedOffActionRunner(action);
+            break;
+        case LedState::Blink:
+            runner = new LedBlinkActionRunner(action);
+            break;
+        default:
+            assert(false);
+            return nullptr;
+    }
+
+    runner->on_led_changed([pin](bool state) { gpio_set_level((gpio_num_t)pin, state); });
+
+    return runner;
+}

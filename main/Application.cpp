@@ -8,26 +8,16 @@
 
 LOG_TAG(Application);
 
-Application::Application() : _network_connection(&_queue, CONFIG_DEVICE_NETWORK_CONNECT_ATTEMPTS), _controls(&_queue) {}
-
-static bool green_on = false;
-static bool red_on = false;
+Application::Application()
+    : _network_connection(&_queue, CONFIG_DEVICE_NETWORK_CONNECT_ATTEMPTS),
+      _mqtt_connection(&_queue),
+      _controls(&_queue),
+      _device(_mqtt_connection, _controls) {}
 
 void Application::begin(bool silent) {
     ESP_LOGI(TAG, "Setting up the log manager");
 
     _log_manager.begin();
-
-    _controls.begin();
-
-    _controls.on_press([this]() {
-        green_on = !green_on;
-        _controls.set_green_led(green_on);
-    });
-    _controls.on_long_press([this]() {
-        red_on = !red_on;
-        _controls.set_red_led(red_on);
-    });
 
     setup_flash();
 
@@ -79,7 +69,23 @@ void Application::begin_network_available() {
         _ota_manager.begin();
     }
 
-    _queue.enqueue([this]() { begin_after_initialization(); });
+    begin_mqtt();
+}
+
+void Application::begin_mqtt() {
+    ESP_LOGI(TAG, "Connecting to MQTT");
+
+    _mqtt_connection.on_connected_changed([this](auto state) {
+        if (state.connected) {
+            _queue.enqueue([this]() { begin_after_initialization(); });
+        } else {
+            ESP_LOGE(TAG, "MQTT connection lost");
+            esp_restart();
+        }
+    });
+
+    _mqtt_connection.set_configuration(&_configuration);
+    _mqtt_connection.begin();
 }
 
 void Application::begin_after_initialization() {
@@ -96,6 +102,8 @@ void Application::begin_after_initialization() {
 
 void Application::begin_app() {
     ESP_LOGI(TAG, "Startup complete");
+
+    _controls.begin();
 
     _device.begin();
 }

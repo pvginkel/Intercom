@@ -1,3 +1,8 @@
+# TODO
+
+- BLink lights during startup.
+- Blink lights on failure.
+
 # Pin assignment
 
 PB = purple = 33

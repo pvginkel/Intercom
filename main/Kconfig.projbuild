@@ -59,4 +59,20 @@ menu "Device Configuration"
         int "I2S speaker data pin"
         default -1
 
+    config DEVICE_I2S_SAMPLE_RATE
+        int "I2S sample rate"
+        default 16000
+
+    config DEVICE_I2S_BITS_PER_SAMPLE
+        int "I2S bits per sample"
+        default 16
+
+    config DEVICE_AUDIO_BUFFER_MS
+        int "Audio buffer size in ms"
+        default 100
+
+    config DEVICE_AUDIO_CHUNK_MS
+        int "Audio chunk size in ms"
+        default 20
+
 endmenu

@@ -8,6 +8,10 @@ menu "Device Configuration"
     config MQTT_USER_ID
         string "MQTT user ID"
 
+    config DEVICE_MICROPHONE_GAIN_BITS
+        int "Gain to apply to raw samples in bits (i.e. ^2)"
+        default 0
+
     config DEVICE_CONFIG_ENDPOINT
         string "Device config endpoint (%s becomes MAC address)"
 

@@ -12,9 +12,7 @@ string strformat(const char* fmt, ...) {
     }
 
     auto buffer = (char*)malloc(length + 1);
-    if (!buffer) {
-        abort();
-    }
+    ESP_ERROR_ASSERT(buffer);
 
     va_start(ap, fmt);
     vsprintf(buffer, fmt, ap);

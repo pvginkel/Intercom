@@ -10,6 +10,7 @@ AudioMixer::AudioMixer() {
     _audio_buffer_len = CONFIG_DEVICE_AUDIO_BUFFER_LEN;
     _buffer_len = _audio_buffer_len * 2;
     _buffer = (uint8_t*)malloc(_buffer_len);
+    ESP_ERROR_ASSERT(_buffer);
 }
 
 AudioMixer::~AudioMixer() { free(_buffer); }

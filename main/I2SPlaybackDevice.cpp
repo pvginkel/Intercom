@@ -90,6 +90,7 @@ void I2SPlaybackDevice::write_task() {
     const auto buffer_len_ms = CONFIG_DEVICE_AUDIO_CHUNK_MS;
     const auto buffer_len = CONFIG_DEVICE_AUDIO_CHUNK_LEN;
     const auto buffer = (uint8_t *)malloc(buffer_len);
+    ESP_ERROR_ASSERT(buffer);
     auto start_ms = esp_get_millis();
     auto played_ms = 0ull;
 
@@ -105,11 +106,7 @@ void I2SPlaybackDevice::write_task() {
         }
     }
 
-    // ESP_LOGI(TAG, "x1");
-
     ESP_ERROR_CHECK(i2s_channel_enable(_chan));
-
-    // ESP_LOGI(TAG, "x2");
 
     while (_playing) {
         // played_ms maintains the number of ms played. We play audio in
@@ -119,8 +116,6 @@ void I2SPlaybackDevice::write_task() {
         // stream. If we get too many hiccups, increase the multiplier
         // on buffer_len_ms in calculating the delay.
 
-        // ESP_LOGI(TAG, "x3");
-
         auto elapsed_ms = esp_get_millis() - start_ms;
         auto delay_ms = (played_ms + buffer_len_ms) - elapsed_ms;
         if (delay_ms) {
@@ -129,8 +124,6 @@ void I2SPlaybackDevice::write_task() {
             // ESP_LOGI(TAG, "Waiting %d", (int)rounded_up_delay_ms);
             vTaskDelay(pdMS_TO_TICKS(rounded_up_delay_ms));
         }
-
-        // ESP_LOGI(TAG, "x4");
 
         bool has_data;
 
@@ -150,7 +143,6 @@ void I2SPlaybackDevice::write_task() {
             break;
         }
 
-        // ESP_LOGI(TAG, "x5");
 
         ESP_ERROR_CHECK(i2s_channel_write(_chan, buffer, buffer_len, nullptr, portMAX_DELAY));
         played_ms += buffer_len_ms;

@@ -21,14 +21,18 @@ class I2SRecordingDevice {
     Mutex _lock;
     Signal _signal;
     Callback<Span<uint8_t>> _data_available;
+    RingBuffer _feed_buffer;
 
 public:
+    I2SRecordingDevice();
+
     void begin();
     void on_recording_changed(function<void(bool)> func) { _recording_changed.add(func); }
     bool is_recording() { return _recording; }
     bool start();
     bool stop();
     void on_data_available(function<void(Span<uint8_t>)> func) { _data_available.add(func); }
+    void feed_reference_samples(uint8_t *buffer, size_t len);
 
 private:
     void read_task();

@@ -6,6 +6,8 @@
 
 LOG_TAG(I2SRecordingDevice);
 
+I2SRecordingDevice::I2SRecordingDevice() : _feed_buffer(CONFIG_DEVICE_AUDIO_CHUNK_LEN * 2) {}
+
 void I2SRecordingDevice::begin() {
     begin_i2s();
     begin_afe();
@@ -15,7 +17,7 @@ void I2SRecordingDevice::begin() {
 }
 
 void I2SRecordingDevice::begin_i2s() {
-    i2s_chan_config_t chan_config = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
+    i2s_chan_config_t chan_config = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_1, I2S_ROLE_MASTER);
     ESP_ERROR_CHECK(i2s_new_channel(&chan_config, NULL, &_chan));
 
     i2s_std_config_t rx_std_cfg = {
@@ -197,26 +199,61 @@ bool I2SRecordingDevice::stop() {
     return result;
 }
 
+void I2SRecordingDevice::feed_reference_samples(uint8_t *buffer, size_t len) {
+    auto guard = _lock.take();
+
+    _feed_buffer.write(buffer, len);
+}
+
 void I2SRecordingDevice::read_task() {
     const auto feed_chunksize = _afe_handle->get_feed_chunksize(_afe_data);
     const auto feed_nch = _afe_handle->get_feed_channel_num(_afe_data);
     assert(feed_nch == 2);
     const auto feed_buffer_len = feed_chunksize * feed_nch * sizeof(int16_t);
     const auto feed_buffer = (int16_t *)malloc(feed_buffer_len);
+    ESP_ERROR_ASSERT(feed_buffer);
+    const auto reference_buffer = (int16_t *)malloc(feed_buffer_len);
+    ESP_ERROR_ASSERT(reference_buffer);
     size_t feed_buffer_offset = 0;
+    int missed_reference_samples = 0;
+    time_t last_report = 0;
 
     // We keep the sample buffer equal to the feed buffer to keep latency down.
     const auto buffer_len = feed_chunksize * 1 /* mono */ * sizeof(int32_t);
     const auto buffer = malloc(buffer_len);
+    ESP_ERROR_ASSERT(buffer);
 
     ESP_ERROR_CHECK(i2s_channel_enable(_chan));
 
     while (_recording) {
+        if (missed_reference_samples) {
+            const auto millis = esp_get_millis();
+            if (last_report + 1000 < millis) {
+                ESP_LOGW(TAG, "Missed reference samples %d", missed_reference_samples);
+
+                last_report = millis;
+                missed_reference_samples = 0;
+            }
+        }
+
         size_t read;
         ESP_ERROR_CHECK(i2s_channel_read(_chan, buffer, buffer_len, &read, portMAX_DELAY));
 
+        size_t reference_read;
+
+        {
+            auto guard = _lock.take();
+
+            reference_read = _feed_buffer.read(reference_buffer, buffer_len);
+        }
+
         auto source = (int32_t *)buffer;
         auto samples = read / sizeof(int32_t);
+        const auto reference_samples = reference_read / sizeof(int16_t);
+
+        if (reference_samples < samples) {
+            missed_reference_samples += samples - reference_samples;
+        }
 
         for (int i = 0; i < samples; i++) {
             // The INMP441 writes bits 1 through 24. To get the 16 MSB bits, we need
@@ -224,8 +261,10 @@ void I2SRecordingDevice::read_task() {
             // signal early on in the process.
             const auto sample = (int16_t)(source[i] >> (15 - CONFIG_DEVICE_MICROPHONE_GAIN_BITS));
 
-            feed_buffer[feed_buffer_offset++] = sample;  // Left mic.
-            feed_buffer[feed_buffer_offset++] = 0;       // Playback/reference channel.
+            const auto reference_sample = i < reference_samples ? reference_buffer[i] : 0;
+
+            feed_buffer[feed_buffer_offset++] = sample;            // Left mic.
+            feed_buffer[feed_buffer_offset++] = reference_sample;  // Playback/reference channel.
 
             if (feed_buffer_offset * sizeof(int16_t) >= feed_buffer_len) {
                 _afe_handle->feed(_afe_data, feed_buffer);

@@ -7,7 +7,7 @@
 LOG_TAG(Device);
 
 Device::Device(MQTTConnection& mqtt_connection, Controls& controls)
-    : _mqtt_connection(mqtt_connection), _controls(controls) {}
+    : _mqtt_connection(mqtt_connection), _controls(controls), _playback_device(&_recording_device) {}
 
 void Device::begin() {
     load_state();

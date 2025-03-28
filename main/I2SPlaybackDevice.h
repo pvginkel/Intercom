@@ -4,10 +4,12 @@
 
 #include "AudioMixer.h"
 #include "Callback.h"
+#include "I2SRecordingDevice.h"
 #include "Mutex.h"
 #include "driver/i2s_std.h"
 
 class I2SPlaybackDevice {
+    I2SRecordingDevice* _recording_device;
     i2s_chan_handle_t _chan;
     atomic<bool> _playing;
     Callback<bool> _playing_changed;
@@ -16,6 +18,8 @@ class I2SPlaybackDevice {
     Callback<void> _buffer_exhausted;
 
 public:
+    I2SPlaybackDevice(I2SRecordingDevice* recording_device) : _recording_device(recording_device) {}
+
     void begin();
     void on_playing_changed(function<void(bool)> func) { _playing_changed.add(func); }
     void on_buffer_exhausted(function<void()> func) { _buffer_exhausted.add(func); }

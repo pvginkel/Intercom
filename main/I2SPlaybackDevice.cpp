@@ -143,6 +143,7 @@ void I2SPlaybackDevice::write_task() {
             break;
         }
 
+        _recording_device->feed_reference_samples(buffer, buffer_len);
 
         ESP_ERROR_CHECK(i2s_channel_write(_chan, buffer, buffer_len, nullptr, portMAX_DELAY));
         played_ms += buffer_len_ms;

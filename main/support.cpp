@@ -1,5 +1,3 @@
-#include "includes.h"
-
 #include "support.h"
 
 string strformat(const char* fmt, ...) {

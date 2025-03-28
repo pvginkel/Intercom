@@ -1,7 +1,27 @@
 #pragma once
 
+#define _USE_MATH_DEFINES
+
+using namespace std;
+
+#include <ctype.h>
+#include <math.h>
+#include <stdarg.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/unistd.h>
+
+#include <string>
+
 #include "cJSON.h"
+#include "esp_err.h"
+#include "esp_http_client.h"
+#include "esp_log.h"
+#include "esp_timer.h"
+#include "freertos/FreeRTOS.h"
 #include "sdkconfig.h"
+#include "secrets.h"
+#include "support.h"
 
 #define __CONCAT3(a, b, c) a##b##c
 #define CONCAT3(a, b, c) __CONCAT3(a, b, c)

@@ -5,6 +5,7 @@
 #include "AudioMixer.h"
 #include "Callback.h"
 #include "Mutex.h"
+#include "driver/i2s_std.h"
 
 class I2SPlaybackDevice {
     i2s_chan_handle_t _chan;

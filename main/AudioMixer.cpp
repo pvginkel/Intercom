@@ -1,6 +1,8 @@
-#include "includes.h"
+#include "support.h"
 
 #include "AudioMixer.h"
+
+#include <algorithm>
 
 LOG_TAG(AudioMixer);
 

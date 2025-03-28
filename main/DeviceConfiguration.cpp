@@ -1,6 +1,8 @@
-#include "includes.h"
+#include "support.h"
 
 #include "DeviceConfiguration.h"
+
+#include "esp_mac.h"
 
 LOG_TAG(DeviceConfiguration);
 

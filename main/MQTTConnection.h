@@ -1,7 +1,6 @@
 #pragma once
 
 #include <set>
-#include <string>
 
 #include "Callback.h"
 #include "DeviceAction.h"
@@ -10,6 +9,7 @@
 #include "LedAction.h"
 #include "Queue.h"
 #include "Span.h"
+#include "mqtt_client.h"
 
 struct MQTTConnectionState {
     bool connected;

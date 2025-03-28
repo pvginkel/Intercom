@@ -4,6 +4,6 @@ IndentWidth: 4
 ColumnLimit: 120
 AccessModifierOffset: -4
 IncludeCategories:
-  - Regex: '"includes.h"'
+  - Regex: '"support.h"'
     Priority: -1
 AllowShortIfStatementsOnASingleLine: false

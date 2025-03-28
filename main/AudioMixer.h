@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 class AudioMixer {
     size_t _audio_buffer_len;
     uint8_t* _buffer{};

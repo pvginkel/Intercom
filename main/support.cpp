@@ -1,30 +1,5 @@
 #include "support.h"
 
-string strformat(const char* fmt, ...) {
-    va_list ap;
-
-    va_start(ap, fmt);
-    auto length = vsnprintf(nullptr, 0, fmt, ap);
-    va_end(ap);
-
-    if (length < 0) {
-        abort();
-    }
-
-    auto buffer = (char*)malloc(length + 1);
-    ESP_ERROR_ASSERT(buffer);
-
-    va_start(ap, fmt);
-    vsprintf(buffer, fmt, ap);
-    va_end(ap);
-
-    auto result = string(buffer, length);
-
-    free(buffer);
-
-    return result;
-}
-
 int getisoweek(tm& time_info) {
     char week_str[3];
     strftime(week_str, sizeof(week_str), "%V", &time_info);
@@ -52,8 +27,6 @@ int hextoi(char c) {
     }
     return -1;
 }
-
-#ifndef LV_SIMULATOR
 
 esp_err_t esp_http_download_string(const esp_http_client_config_t& config, string& target, size_t max_length,
                                    const char* authorization) {
@@ -152,4 +125,23 @@ char const* esp_reset_reason_to_name(esp_reset_reason_t reason) {
     }
 }
 
-#endif
+esp_err_t parse_endpoint(sockaddr_in* addr, const char* input) {
+    const string endpoint(input);
+
+    auto pos = endpoint.find(':');
+    if (pos == string::npos) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    auto ip = endpoint.substr(0, pos);
+    auto port = stoi(endpoint.substr(pos + 1));
+
+    addr->sin_family = AF_INET;
+    addr->sin_port = htons(port);
+
+    if (inet_pton(AF_INET, ip.c_str(), &addr->sin_addr) != 1) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    return ESP_OK;
+}

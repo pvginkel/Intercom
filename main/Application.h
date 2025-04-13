@@ -8,16 +8,18 @@
 #include "NetworkConnection.h"
 #include "OTAManager.h"
 #include "Queue.h"
+#include "UDPServer.h"
 
 class Application {
     NetworkConnection _network_connection;
     MQTTConnection _mqtt_connection;
+    UDPServer _udp_server;
+    Controls _controls;
+    Device _device;
     OTAManager _ota_manager;
     Queue _queue;
     DeviceConfiguration _configuration;
     LogManager _log_manager;
-    Controls _controls;
-    Device _device;
 
 public:
     Application();

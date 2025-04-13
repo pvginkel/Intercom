@@ -11,6 +11,8 @@ public:
     ~RingBuffer();
 
     void reset();
-    size_t write(void* buffer, size_t buffer_len);
+    void write(void* buffer, size_t buffer_len);
     size_t read(void* buffer, size_t buffer_len);
+    size_t skip(size_t len);
+    size_t available() { return _buffer_available; }
 };

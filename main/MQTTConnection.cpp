@@ -16,6 +16,8 @@ LOG_TAG(MQTTConnection);
 #define QOS_MIN_ONE 1      // Send at least one.
 #define QOS_EXACTLY_ONE 2  // Send exactly one.
 
+#define MAXIMUM_PACKET_SIZE 4096
+
 MQTTConnection::MQTTConnection(Queue *queue) : _queue(queue), _device_id(get_device_id()) {}
 
 void MQTTConnection::begin() {
@@ -23,7 +25,7 @@ void MQTTConnection::begin() {
 
     esp_mqtt5_connection_property_config_t connect_property = {
         .session_expiry_interval = 10,
-        .maximum_packet_size = 1024,
+        .maximum_packet_size = MAXIMUM_PACKET_SIZE,
         .receive_maximum = 65535,
         .topic_alias_maximum = 2,
         .request_resp_info = true,
@@ -60,6 +62,10 @@ void MQTTConnection::begin() {
         .network =
             {
                 .disable_auto_reconnect = false,
+            },
+        .buffer =
+            {
+                .size = MAXIMUM_PACKET_SIZE,
             },
     };
 
@@ -110,9 +116,11 @@ void MQTTConnection::event_handler(esp_event_base_t eventBase, int32_t eventId, 
             break;
 
         case MQTT_EVENT_SUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT subscribed error %d", (int)event->error_handle->error_type);
             break;
 
         case MQTT_EVENT_UNSUBSCRIBED:
+            ESP_LOGI(TAG, "MQTT unsubscribed");
             break;
 
         case MQTT_EVENT_PUBLISHED:
@@ -145,12 +153,7 @@ void MQTTConnection::event_handler(esp_event_base_t eventBase, int32_t eventId, 
 }
 
 void MQTTConnection::handle_connected() {
-    const auto stream_in_topic = _topic_prefix + "stream/in";
-
     subscribe(_topic_prefix + "set/+");
-    subscribe(stream_in_topic);
-
-    _subscribed_streams.insert(stream_in_topic);
 
     publish_configuration();
 
@@ -158,15 +161,18 @@ void MQTTConnection::handle_connected() {
 }
 
 void MQTTConnection::handle_data(esp_mqtt_event_handle_t event) {
-    auto topic = string(event->topic, event->topic_len);
+    // We don't support message chunking.
+    ESP_ERROR_ASSERT(!event->current_data_offset);
 
-    if (_subscribed_streams.contains(topic)) {
-        _stream_data.call(MQTTStreamData(topic, {(uint8_t *)event->data, (size_t)event->data_len}));
+    if (!event->topic_len) {
+        ESP_LOGW(TAG, "Handling data without topic");
         return;
     }
 
+    auto topic = string(event->topic, event->topic_len);
+
     if (!topic.starts_with(_topic_prefix)) {
-        ESP_LOGE(TAG, "Unexpected topic %s", topic.c_str());
+        ESP_LOGE(TAG, "Unexpected topic %s topic len %d data len %d", topic.c_str(), event->topic_len, event->data_len);
         return;
     }
 
@@ -193,20 +199,14 @@ void MQTTConnection::handle_data(esp_mqtt_event_handle_t event) {
         if (auto action = parse_led_action(data)) {
             _green_led_changed.queue(_queue, action);
         }
-    } else if (strcmp(sub_topic, "set/subscribe_stream") == 0) {
-        ESP_LOGI(TAG, "Subscribing to topic %s", data.c_str());
+    } else if (strcmp(sub_topic, "set/add_endpoint") == 0) {
+        ESP_LOGI(TAG, "Adding audio recipient endpoint %s", data.c_str());
 
-        _subscribed_streams.insert(data);
-        _stream_subscribed.call(data);
+        _remote_endpoint_added.call(data);
+    } else if (strcmp(sub_topic, "set/remove_endpoint") == 0) {
+        ESP_LOGI(TAG, "Removing audio recipient endpoint %s", data.c_str());
 
-        subscribe(data);
-    } else if (strcmp(sub_topic, "set/unsubscribe_stream") == 0) {
-        ESP_LOGI(TAG, "Unsubscribing from topic %s", data.c_str());
-
-        _subscribed_streams.erase(data);
-        _stream_unsubscribed.call(data);
-
-        unsubscribe(data);
+        _remote_endpoint_removed.call(data);
     } else {
         ESP_LOGE(TAG, "Unknown topic %s", topic.c_str());
     }
@@ -219,7 +219,7 @@ void MQTTConnection::subscribe(const string &topic) {
 }
 
 void MQTTConnection::unsubscribe(const string &topic) {
-    ESP_LOGI(TAG, "Unsubscribing to topic %s", topic.c_str());
+    ESP_LOGI(TAG, "Unsubscribing from topic %s", topic.c_str());
 
     ESP_ERROR_ASSERT(esp_mqtt_client_unsubscribe(_client, topic.c_str()) >= 0);
 }
@@ -229,11 +229,11 @@ void MQTTConnection::publish_configuration() {
 
     auto uniqueIdentifier = strformat("%s_%s", TOPIC_PREFIX, _device_id.c_str());
 
-    auto root = cJSON_CreateObject();
+    cJSON_Data root = {cJSON_CreateObject()};
 
-    cJSON_AddStringToObject(root, "unique_id", uniqueIdentifier.c_str());
+    cJSON_AddStringToObject(*root, "unique_id", uniqueIdentifier.c_str());
 
-    auto audio_formats = cJSON_AddObjectToObject(root, "audio_formats");
+    auto audio_formats = cJSON_AddObjectToObject(*root, "audio_formats");
 
     auto audio_formats_in = cJSON_AddObjectToObject(audio_formats, "in");
     cJSON_AddStringToObject(audio_formats_in, "channel_layout", "mono");
@@ -245,13 +245,14 @@ void MQTTConnection::publish_configuration() {
     cJSON_AddNumberToObject(audio_formats_out, "sample_rate", CONFIG_DEVICE_I2S_SAMPLE_RATE);
     cJSON_AddNumberToObject(audio_formats_out, "bit_rate", CONFIG_DEVICE_I2S_BITS_PER_SAMPLE);
 
-    auto device = cJSON_AddObjectToObject(root, "device");
+    auto device = cJSON_AddObjectToObject(*root, "device");
     cJSON_AddStringToObject(device, "manufacturer", DEVICE_MANUFACTURER);
     cJSON_AddStringToObject(device, "model", DEVICE_MODEL);
     cJSON_AddStringToObject(device, "name", _configuration->get_device_name().c_str());
 
-    auto json = cJSON_PrintUnformatted(root);
-    cJSON_Delete(root);
+    cJSON_AddStringToObject(*root, "endpoint", _udp_endpoint.c_str());
+
+    auto json = cJSON_PrintUnformatted(*root);
 
     auto topic = _topic_prefix + "configuration";
     ESP_ERROR_ASSERT(esp_mqtt_client_publish(_client, topic.c_str(), json, 0, QOS_MIN_ONE, true) >= 0);
@@ -319,12 +320,6 @@ void MQTTConnection::send_state(DeviceState &state) {
     cJSON_AddBoolToObject(*root, "playing", state.playing);
     cJSON_AddBoolToObject(*root, "recording", state.recording);
 
-    auto subscribed_streams = cJSON_AddArrayToObject(*root, "subscribed_streams");
-
-    for (const auto &subscribed_stream : state.subscribed_streams) {
-        cJSON_AddItemToArray(subscribed_streams, cJSON_CreateString(subscribed_stream.c_str()));
-    }
-
     auto json = cJSON_PrintUnformatted(*root);
 
     auto topic = _topic_prefix + "state";
@@ -341,15 +336,6 @@ void MQTTConnection::send_action(DeviceAction action) {
 
     auto topic = _topic_prefix + "set/action";
     auto result = esp_mqtt_client_publish(_client, topic.c_str(), data, 0, QOS_MIN_ONE, false);
-    if (result < 0) {
-        ESP_LOGE(TAG, "Sending action message failed with error %d", result);
-    }
-}
-
-void MQTTConnection::send_audio(Span<uint8_t> data) {
-    auto topic = _topic_prefix + "stream/out";
-    auto result =
-        esp_mqtt_client_publish(_client, topic.c_str(), (const char *)data.buffer(), data.len(), QOS_MIN_ONE, false);
     if (result < 0) {
         ESP_LOGE(TAG, "Sending action message failed with error %d", result);
     }

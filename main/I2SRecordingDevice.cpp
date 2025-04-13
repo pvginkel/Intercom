@@ -3,17 +3,28 @@
 #include "I2SRecordingDevice.h"
 
 #define SAMPLE_RATE 16000
+#define SMOOTHING_FACTOR 0.01f
 
 LOG_TAG(I2SRecordingDevice);
 
-I2SRecordingDevice::I2SRecordingDevice() : _feed_buffer(CONFIG_DEVICE_AUDIO_CHUNK_LEN * 2) {}
+I2SRecordingDevice::I2SRecordingDevice(UDPServer &udp_server)
+    : _udp_server(udp_server), _feed_buffer(CONFIG_DEVICE_AUDIO_BUFFER_LEN * 2) {
+#ifdef CONFIG_DEVICE_DUMP_AFE_INPUT
+    parse_endpoint(&_dump_target, CONFIG_DEVICE_DUMP_AFE_INPUT_TARGET);
+#endif
+}
 
 void I2SRecordingDevice::begin() {
     begin_i2s();
     begin_afe();
 
-    xTaskCreate([](void *param) { ((I2SRecordingDevice *)param)->forward_task(); }, "I2SRecordingDevice::forward_task",
-                CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr);
+    xTaskCreatePinnedToCore(
+        [](void *param) {
+            ((I2SRecordingDevice *)param)->forward_task();
+
+            vTaskDelete(nullptr);
+        },
+        "forward_task", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr, 0);
 }
 
 void I2SRecordingDevice::begin_i2s() {
@@ -63,8 +74,11 @@ void I2SRecordingDevice::begin_afe() {
     assert(afe_config->aec_init == true);
     // The mode of aec, AEC_MODE_SR_LOW_COST or AEC_MODE_SR_HIGH_PERF
     // afe_config->aec_mode;
+    afe_config->aec_mode = AEC_MODE_VOIP_LOW_COST;
     // The filter length of aec
     // afe_config->aec_filter_length;
+    assert(afe_config->aec_filter_length == 4);
+    afe_config->aec_filter_length = 8;
 
     /********** SE(Speech Enhancement, microphone array processing) **********/
     // Whether to init se
@@ -142,9 +156,38 @@ void I2SRecordingDevice::begin_afe() {
     // afe_config->fixed_first_channel;
 
     _afe_handle = esp_afe_handle_from_config(afe_config);
+    ESP_ERROR_ASSERT(_afe_handle);
     _afe_data = _afe_handle->create_from_config(afe_config);
+    ESP_ERROR_ASSERT(_afe_data);
 
     afe_config_free(afe_config);
+}
+
+int16_t I2SRecordingDevice::scale_sample(int32_t sample, float &smoothed_peak) {
+    // This logic implements a smoothing algorithm to dynamically
+    // scale the raw samples to 16 bits.
+
+    const auto abs_sample = abs((float)(sample));
+
+    // Update the smoothed peak:
+    // - If the current sample exceeds the current smoothedPeak, update immediately.
+    // - Otherwise, decay the smoothed peak slowly.
+
+    if (abs_sample > smoothed_peak) {
+        smoothed_peak = abs_sample;
+    } else {
+        smoothed_peak = smoothed_peak * (1.0f - SMOOTHING_FACTOR) + abs_sample * SMOOTHING_FACTOR;
+    }
+
+    // Prevent division by zero or very small numbers.
+    if (smoothed_peak < 1.0f) {
+        smoothed_peak = 1.0f;
+    }
+
+    // Calculate the gain factor to map the smoothed peak to the 16-bit maximum.
+    const auto gain = min(1.0f, float(INT16_MAX) / smoothed_peak);
+
+    return (int16_t)clamp<int32_t>(sample * gain, INT16_MIN, INT16_MAX);
 }
 
 bool I2SRecordingDevice::start() {
@@ -162,10 +205,15 @@ bool I2SRecordingDevice::start() {
             _recording = true;
 
             // AFE requires a significantly larger than normal stack.
-            const int AFE_TASK_SIZE = 8291;
+            const int AFE_TASK_SIZE = 8192;
 
-            xTaskCreate([](void *param) { ((I2SRecordingDevice *)param)->read_task(); },
-                        "I2SRecordingDevice::read_task", AFE_TASK_SIZE, this, 5, nullptr);
+            xTaskCreatePinnedToCore(
+                [](void *param) {
+                    ((I2SRecordingDevice *)param)->read_task();
+
+                    vTaskDelete(nullptr);
+                },
+                "read_task", AFE_TASK_SIZE, this, 5, nullptr, 1);
         }
     }
 
@@ -199,13 +247,23 @@ bool I2SRecordingDevice::stop() {
     return result;
 }
 
-void I2SRecordingDevice::feed_reference_samples(uint8_t *buffer, size_t len) {
+void I2SRecordingDevice::reset_feed_buffer() {
+    auto guard = _lock.take();
+
+    _feed_buffer_end_time = 0;
+    _feed_buffer.reset();
+}
+
+void I2SRecordingDevice::feed_reference_samples(int64_t time, uint8_t *buffer, size_t len) {
     auto guard = _lock.take();
 
     _feed_buffer.write(buffer, len);
+    _feed_buffer_end_time = time + SAMPLES_TO_US(len / sizeof(int16_t));
 }
 
 void I2SRecordingDevice::read_task() {
+    auto task_guard = _task_lock.take();
+
     const auto feed_chunksize = _afe_handle->get_feed_chunksize(_afe_data);
     const auto feed_nch = _afe_handle->get_feed_channel_num(_afe_data);
     assert(feed_nch == 2);
@@ -215,8 +273,7 @@ void I2SRecordingDevice::read_task() {
     const auto reference_buffer = (int16_t *)malloc(feed_buffer_len);
     ESP_ERROR_ASSERT(reference_buffer);
     size_t feed_buffer_offset = 0;
-    int missed_reference_samples = 0;
-    time_t last_report = 0;
+    auto smoothed_peak = 1.0f;
 
     // We keep the sample buffer equal to the feed buffer to keep latency down.
     const auto buffer_len = feed_chunksize * 1 /* mono */ * sizeof(int32_t);
@@ -225,41 +282,68 @@ void I2SRecordingDevice::read_task() {
 
     ESP_ERROR_CHECK(i2s_channel_enable(_chan));
 
+    // Capture the time we start recording. We assume that we're taking samples from
+    // the moment we've enabled the channel.
+    auto recording_time = esp_timer_get_time();
+
+    auto feed_buffer_synced = false;
+
     while (_recording) {
-        if (missed_reference_samples) {
-            const auto millis = esp_get_millis();
-            if (last_report + 1000 < millis) {
-                ESP_LOGW(TAG, "Missed reference samples %d", missed_reference_samples);
-
-                last_report = millis;
-                missed_reference_samples = 0;
-            }
-        }
-
         size_t read;
         ESP_ERROR_CHECK(i2s_channel_read(_chan, buffer, buffer_len, &read, portMAX_DELAY));
 
-        size_t reference_read;
+        const auto samples = read / sizeof(int32_t);
+
+        size_t reference_read = 0;
 
         {
             auto guard = _lock.take();
 
-            reference_read = _feed_buffer.read(reference_buffer, buffer_len);
+            if (!feed_buffer_synced) {
+                // Sync the feed buffer with the recording offset. If the current recording
+                // time lies within the data buffered in the feed buffer, sync up the head
+                // of the feed buffer with the recording time and take samples from it.
+
+                auto feed_buffer_start_time =
+                    _feed_buffer_end_time - SAMPLES_TO_US(_feed_buffer.available() / sizeof(int16_t));
+
+                if (recording_time >= feed_buffer_start_time && recording_time <= _feed_buffer_end_time) {
+                    // Sync up the head of the feed buffer with the recording time.
+                    const auto skip = US_TO_SAMPLES(recording_time - feed_buffer_start_time) * sizeof(int16_t);
+
+                    _feed_buffer.skip(skip);
+
+                    feed_buffer_synced = true;
+                }
+            }
+
+            if (feed_buffer_synced) {
+                reference_read = _feed_buffer.read(reference_buffer, samples * sizeof(int16_t));
+                if (reference_read < samples * sizeof(int16_t)) {
+                    feed_buffer_synced = false;
+                }
+            }
         }
 
-        auto source = (int32_t *)buffer;
-        auto samples = read / sizeof(int32_t);
+        recording_time += SAMPLES_TO_US(samples);
+
         const auto reference_samples = reference_read / sizeof(int16_t);
 
-        if (reference_samples < samples) {
-            missed_reference_samples += samples - reference_samples;
-        }
+        auto source = (int32_t *)buffer;
 
         for (int i = 0; i < samples; i++) {
-            // The INMP441 writes bits 1 through 24. To get the 16 MSB bits, we need
-            // to shift away 15 bits. We shift a few bits less to gain the audio
-            // signal early on in the process.
-            const auto sample = (int16_t)(source[i] >> (15 - CONFIG_DEVICE_MICROPHONE_GAIN_BITS));
+            // The INMP441 writes bits 1 through 24. To align this with a 32 bit value,
+            // the shift would have to be (source << 1) >> 8. We however need to compress
+            // the value into 16 bits. This is done with a smoothing algorithm.
+            // The value of CONFIG_DEVICE_MICROPHONE_GAIN_BITS determines how much
+            // bits we actually give the method. The full 24 bit range is too much (it
+            // picks up far to low volume audio), so we clip the bottom here already.
+            //
+            // The result will be 24 bits compressed into (16 + CONFIG_DEVICE_MICROPHONE_GAIN_BITS)
+            // bits.
+
+            const auto raw_sample = (source[i] << 1) >> (16 - CONFIG_DEVICE_MICROPHONE_GAIN_BITS);
+            const auto sample = scale_sample(raw_sample, smoothed_peak);
 
             const auto reference_sample = i < reference_samples ? reference_buffer[i] : 0;
 
@@ -269,6 +353,10 @@ void I2SRecordingDevice::read_task() {
             if (feed_buffer_offset * sizeof(int16_t) >= feed_buffer_len) {
                 _afe_handle->feed(_afe_data, feed_buffer);
                 feed_buffer_offset = 0;
+
+#ifdef CONFIG_DEVICE_DUMP_AFE_INPUT
+                _udp_server.send((sockaddr *)&_dump_target, sizeof(_dump_target), feed_buffer, feed_buffer_len);
+#endif
             }
         }
     }
@@ -279,7 +367,6 @@ void I2SRecordingDevice::read_task() {
 
     free(buffer);
     free(feed_buffer);
-    vTaskDelete(nullptr);
 }
 
 void I2SRecordingDevice::forward_task() {

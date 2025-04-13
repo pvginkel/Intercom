@@ -11,8 +11,9 @@ LOG_TAG(Application);
 Application::Application()
     : _network_connection(&_queue, CONFIG_DEVICE_NETWORK_CONNECT_ATTEMPTS),
       _mqtt_connection(&_queue),
+      _udp_server(11106),
       _controls(&_queue),
-      _device(_mqtt_connection, _controls) {}
+      _device(_mqtt_connection, _udp_server, _controls) {}
 
 void Application::begin(bool silent) {
     ESP_LOGI(TAG, "Setting up the log manager");
@@ -69,6 +70,8 @@ void Application::begin_network_available() {
         _ota_manager.begin();
     }
 
+    _udp_server.begin();
+
     begin_mqtt();
 }
 
@@ -85,6 +88,10 @@ void Application::begin_mqtt() {
     });
 
     _mqtt_connection.set_configuration(&_configuration);
+
+    _mqtt_connection.set_udp_endpoint(
+        strformat("%s:%d", _network_connection.get_ip_address().c_str(), _udp_server.get_port()));
+
     _mqtt_connection.begin();
 }
 

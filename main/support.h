@@ -4,9 +4,10 @@
 
 using namespace std;
 
+#include "support.h"
+
 #include <ctype.h>
 #include <math.h>
-#include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
@@ -21,7 +22,7 @@ using namespace std;
 #include "freertos/FreeRTOS.h"
 #include "sdkconfig.h"
 #include "secrets.h"
-#include "support.h"
+#include "strformat.h"
 
 #define __CONCAT3(a, b, c) a##b##c
 #define CONCAT3(a, b, c) __CONCAT3(a, b, c)
@@ -33,9 +34,19 @@ using namespace std;
 #define CONFIG_DEVICE_AUDIO_CHUNK_LEN \
     (CONFIG_DEVICE_I2S_BITS_PER_SAMPLE / 8 * CONFIG_DEVICE_I2S_SAMPLE_RATE * CONFIG_DEVICE_AUDIO_CHUNK_MS / 1000)
 
+#if (CONFIG_DEVICE_I2S_SAMPLE_RATE != 16000)
+#error Sample rate must be 16000 Hz
+#endif
+
+// At 16000 Hz a single sample is 62.5 microseconds. The macros below
+// transfer between samples and microseconds keeping as much precision
+// as possible.
+
+#define US_TO_SAMPLES(us) (((us) * 2) / 125)
+#define SAMPLES_TO_US(samples) (((samples) * 125) / 2)
+
 #define esp_get_millis() uint32_t(esp_timer_get_time() / 1000ull)
 
-string strformat(const char* fmt, ...);
 int getisoweek(tm& time_info);
 
 #ifdef NDEBUG
@@ -98,17 +109,8 @@ public:
     cJSON* operator*() const { return _data; }
 };
 
-#ifdef LV_SIMULATOR
-#define IRAM_ATTR
-
-#define localtime_r(timep, result) localtime_s(result, timep)
-#endif
-
-#ifndef LV_SIMULATOR
-
 esp_err_t esp_http_download_string(const esp_http_client_config_t& config, string& target, size_t max_length = 0,
                                    const char* authorization = nullptr);
 esp_err_t esp_http_upload_string(const esp_http_client_config_t& config, const char* const data);
 char const* esp_reset_reason_to_name(esp_reset_reason_t reason);
-
-#endif
+esp_err_t parse_endpoint(sockaddr_in* addr, const char* input);

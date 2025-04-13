@@ -1,13 +1,19 @@
 #pragma once
 
 #include <map>
+#include <tuple>
 
 class AudioMixer {
+    struct WriteOffset {
+        size_t offset;
+        int32_t packet_index;
+    };
+
     size_t _audio_buffer_len;
     uint8_t* _buffer{};
     size_t _buffer_len{};
     size_t _read_offset;
-    map<string, size_t> _write_offsets;
+    map<tuple<in_addr_t, in_port_t>, WriteOffset> _write_offsets;
 
 public:
     AudioMixer();
@@ -15,9 +21,9 @@ public:
 
     bool has_data();
     void reset();
-    void append(const string& topic, uint8_t* buffer, size_t buffer_len);
+    void append(sockaddr_in* source_addr, uint8_t* buffer, size_t buffer_len);
     void take(uint8_t* buffer, size_t buffer_len);
 
 private:
-    void mix_audio(uint8_t* source, uint8_t* target, size_t len);
+    void mix_audio(int16_t* source, int16_t* target, size_t samples);
 };

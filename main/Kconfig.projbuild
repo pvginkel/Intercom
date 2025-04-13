@@ -79,6 +79,20 @@ menu "Device Configuration"
         int "Audio chunk size in ms"
         default 20
 
+    config DEVICE_DUMP_AFE_INPUT
+        bool "Dump AFE input to an UDP endpoint"
+        
+    config DEVICE_DUMP_AFE_INPUT_TARGET
+        string "Dump AFE input UDP target endpoint"
+        depends on DEVICE_DUMP_AFE_INPUT
+
+        help
+            Audio will be dumped in stereo 16 bit format. The left channel is
+            the audio as recorded by the microphone and the right channel
+            is the reference channel.
+
+            The format of the target is <ip address>:<port>.
+
     config DEVICE_SHOW_CPU_USAGE
         bool "Show CPU usage"
         default n

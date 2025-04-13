@@ -8,5 +8,4 @@ struct DeviceState {
     bool green_led{};
     bool playing{};
     bool recording{};
-    vector<string> subscribed_streams;
 };

@@ -45,8 +45,13 @@ bool I2SPlaybackDevice::start() {
 
             _buffer.reset();
 
-            xTaskCreate([](void *param) { ((I2SPlaybackDevice *)param)->write_task(); },
-                        "I2SPlaybackDevice::write_task", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr);
+            xTaskCreatePinnedToCore(
+                [](void *param) {
+                    ((I2SPlaybackDevice *)param)->write_task();
+
+                    vTaskDelete(nullptr);
+                },
+                "write_task", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr, 0);
         }
     }
 
@@ -80,51 +85,50 @@ bool I2SPlaybackDevice::stop() {
     return result;
 }
 
-void I2SPlaybackDevice::add_samples(const string &topic, uint8_t *buffer, size_t buffer_len) {
+void I2SPlaybackDevice::add_samples(sockaddr_in *source_addr, uint8_t *buffer, size_t buffer_len) {
     auto guard = _lock.take();
 
-    _buffer.append(topic, buffer, buffer_len);
+    _buffer.append(source_addr, buffer, buffer_len);
 }
 
 void I2SPlaybackDevice::write_task() {
-    const auto buffer_len_ms = CONFIG_DEVICE_AUDIO_CHUNK_MS;
+    auto task_guard = _task_lock.take();
+
     const auto buffer_len = CONFIG_DEVICE_AUDIO_CHUNK_LEN;
     const auto buffer = (uint8_t *)malloc(buffer_len);
     ESP_ERROR_ASSERT(buffer);
-    auto start_ms = esp_get_millis();
-    auto played_ms = 0ull;
 
-    memset(buffer, 0, buffer_len);
+    // Wait a little bit to give the buffer some time to collect data.
+
+    vTaskDelay(pdMS_TO_TICKS(10));
 
     // Clear the DMA buffers.
+
+    int32_t preloaded_samples = 0;
+
+    memset(buffer, 0, buffer_len);
 
     while (true) {
         size_t written;
         ESP_ERROR_CHECK(i2s_channel_preload_data(_chan, buffer, buffer_len, &written));
+
+        preloaded_samples += written / sizeof(int16_t);
+
         if (written < buffer_len) {
             break;
         }
     }
 
+    _recording_device.reset_feed_buffer();
+
     ESP_ERROR_CHECK(i2s_channel_enable(_chan));
 
+    // Calculate at what time sound should be playing from the buffer. We take the
+    // time that we enable the channel, plus the preloaded data above.
+
+    auto playback_time = esp_timer_get_time() + SAMPLES_TO_US(preloaded_samples);
+
     while (_playing) {
-        // played_ms maintains the number of ms played. We play audio in
-        // chunks of buffer_len_ms time. We want the current time to be
-        // inside the next chunk of "buffer" time. This causes this loop
-        // to be a little bit (buffer_len_ms) behind the incoming audio
-        // stream. If we get too many hiccups, increase the multiplier
-        // on buffer_len_ms in calculating the delay.
-
-        auto elapsed_ms = esp_get_millis() - start_ms;
-        auto delay_ms = (played_ms + buffer_len_ms) - elapsed_ms;
-        if (delay_ms) {
-            auto rounded_up_delay_ms = ((delay_ms + buffer_len_ms - 1) / buffer_len_ms) * buffer_len_ms;
-            ESP_ERROR_ASSERT(rounded_up_delay_ms > 0 && rounded_up_delay_ms < 100);
-            // ESP_LOGI(TAG, "Waiting %d", (int)rounded_up_delay_ms);
-            vTaskDelay(pdMS_TO_TICKS(rounded_up_delay_ms));
-        }
-
         bool has_data;
 
         {
@@ -143,16 +147,17 @@ void I2SPlaybackDevice::write_task() {
             break;
         }
 
-        _recording_device->feed_reference_samples(buffer, buffer_len);
+        _recording_device.feed_reference_samples(playback_time, buffer, buffer_len);
+        playback_time += SAMPLES_TO_US(buffer_len / sizeof(int16_t));
 
         ESP_ERROR_CHECK(i2s_channel_write(_chan, buffer, buffer_len, nullptr, portMAX_DELAY));
-        played_ms += buffer_len_ms;
     }
 
     ESP_LOGI(TAG, "Exiting write task");
 
+    _recording_device.reset_feed_buffer();
+
     ESP_ERROR_CHECK(i2s_channel_disable(_chan));
 
     free(buffer);
-    vTaskDelete(nullptr);
 }

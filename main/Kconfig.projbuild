@@ -79,4 +79,8 @@ menu "Device Configuration"
         int "Audio chunk size in ms"
         default 20
 
+    config DEVICE_SHOW_CPU_USAGE
+        bool "Show CPU usage"
+        default n
+
 endmenu

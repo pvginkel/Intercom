@@ -65,7 +65,12 @@ void I2SRecordingDevice::begin_i2s() {
 }
 
 void I2SRecordingDevice::begin_afe() {
-    _models = esp_srmodel_init("model");
+    // Quick and dirty way to properly initialize an empty models data structure.
+    // The first four bytes of the model partition is the number of models.
+    int32_t model_count = 0;
+    _models = srmodel_load(&model_count);
+
+    // _models = esp_srmodel_init("model");
 
     auto afe_config = afe_config_init("MR", _models, AFE_TYPE_VC, AFE_MODE_HIGH_PERF);
 

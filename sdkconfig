@@ -2179,7 +2179,6 @@ CONFIG_WIFI_SSID="Thing-Fish"
 # OTA Configuration
 #
 CONFIG_OTA_ENDPOINT="http://iotsupport.home/assets/intercom-ota.bin"
-CONFIG_OTA_BOOT_ENDPOINT="http://iotsupport.home/assets/bootstrapper-esp32s3-ota.bin"
 CONFIG_OTA_CHECK_INTERVAL=300
 CONFIG_OTA_RECV_TIMEOUT=15000
 # end of OTA Configuration

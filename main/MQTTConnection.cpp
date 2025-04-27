@@ -2,6 +2,8 @@
 
 #include "MQTTConnection.h"
 
+#include <charconv>
+
 #include "esp_mac.h"
 
 LOG_TAG(MQTTConnection);
@@ -207,6 +209,16 @@ void MQTTConnection::handle_data(esp_mqtt_event_handle_t event) {
         ESP_LOGI(TAG, "Removing audio recipient endpoint %s", data.c_str());
 
         _remote_endpoint_removed.call(data);
+    } else if (strcmp(sub_topic, "set/volume") == 0) {
+        ESP_LOGI(TAG, "Setting volume to %s", data.c_str());
+
+        cJSON_Data root = {cJSON_Parse(data.c_str())};
+
+        if (cJSON_IsNumber(*root)) {
+            _volume_changed.call((*root)->valuedouble);
+        } else {
+            ESP_LOGE(TAG, "Failed to parse value '%s' as float", data.c_str());
+        }
     } else {
         ESP_LOGE(TAG, "Unknown topic %s", topic.c_str());
     }
@@ -319,6 +331,7 @@ void MQTTConnection::send_state(DeviceState &state) {
     cJSON_AddBoolToObject(*root, "green_led", state.green_led);
     cJSON_AddBoolToObject(*root, "playing", state.playing);
     cJSON_AddBoolToObject(*root, "recording", state.recording);
+    cJSON_AddNumberToObject(*root, "volume", state.volume);
 
     auto json = cJSON_PrintUnformatted(*root);
 

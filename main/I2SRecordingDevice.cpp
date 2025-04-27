@@ -2,7 +2,6 @@
 
 #include "I2SRecordingDevice.h"
 
-#define SAMPLE_RATE 16000
 #define SMOOTHING_FACTOR 0.01f
 
 LOG_TAG(I2SRecordingDevice);
@@ -32,7 +31,7 @@ void I2SRecordingDevice::begin_i2s() {
     ESP_ERROR_CHECK(i2s_new_channel(&chan_config, NULL, &_chan));
 
     i2s_std_config_t rx_std_cfg = {
-        .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(SAMPLE_RATE),
+        .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(CONFIG_DEVICE_I2S_SAMPLE_RATE),
         .slot_cfg =
             {
                 .data_bit_width = I2S_DATA_BIT_WIDTH_32BIT,

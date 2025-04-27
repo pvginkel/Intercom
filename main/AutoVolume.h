@@ -1,0 +1,63 @@
+#pragma once
+
+#include <vector>
+
+/**
+ * One-channel automatic volume control (downward only) with
+ *   - look-ahead         (1 ms delay, prevents attack distortion)
+ *   - hold time          (stops gain “chatter” between syllables)
+ *   - soft knee          (3 dB quadratic knee around the target)
+ *   - post limiter       (–0.1 dBFS hard clip, catches residual peaks)
+ */
+class AutoVolume {
+    // Delay applied to audio so gain precedes peaks (ms)
+    static constexpr float LOOKAHEAD_MS = 1.0f;
+
+    // Attack time (ms)  – how fast attenuation ramps down
+    static constexpr float ATTACK = MS2S(10.0f);
+    // Release time (ms) – how fast it recovers
+    static constexpr float RELEASE = MS2S(150.0f);
+    // RMS window for level detection (ms)
+    static constexpr float WINDOW = MS2S(20.0f);
+    // Hold time after each attenuation burst (ms)
+    static constexpr float HOLD = MS2S(50.0f);
+    // Soft-knee half-width in dB (0 = hard)
+    static constexpr float KNEE_DB = 3.0f;
+    // Maximum attenuation (positive number, dB)
+    static constexpr float MAX_ATTEN_DB = 25.0f;
+    // Brick-wall peak limit (negative, dBFS)
+    static constexpr float LIMITER_DB = -0.1f;
+
+public:
+    /**
+     * @param targetDb Desired long-term RMS in dBFS  (e.g. -18).
+     */
+    AutoVolume(float targetDb = -18.0f);
+
+    /** Reset envelopes, gain and delay-line (call on fs/parameter change). */
+    void reset();
+
+    /** In-place processing of a mono block of 32-bit floats in [-1,1]. */
+    void process_block(int16_t* buffer, size_t samples);
+
+    float get_target_db() { return _target_db; }
+    void set_target_db(float target_db) { _target_db = target_db; }
+
+private:
+    /* constants */
+    const float _limiter_linear;
+
+    float _target_db;
+    // RMS envelope (linear)
+    float _envelope = 0.0f;
+    // Applied attenuation dB
+    float _gain_db = 0.0f;
+    // Linear gain factor
+    float _gain_linear = 1.0f;
+    // Seconds left in hold
+    float _hold_timer = 0.0f;
+    // Look-ahead buffer
+    std::vector<float> _delay_buffer;
+    // Write pointer into the look-ahead buffer
+    size_t _delay_offset = 0;
+};

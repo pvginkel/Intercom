@@ -18,6 +18,8 @@ Device::Device(MQTTConnection& mqtt_connection, UDPServer& udp_server, Controls&
 void Device::begin() {
     load_state();
 
+    _playback_device.set_volume(_state.volume);
+
     _recording_device.on_recording_changed([this](bool recording) {
         if (_state.recording != recording) {
             _state.recording = recording;
@@ -28,6 +30,14 @@ void Device::begin() {
         if (_state.playing != playing) {
             _state.playing = playing;
             state_changed();
+        }
+    });
+    _playback_device.on_volume_changed([this](float volume) {
+        if (_state.volume != volume) {
+            _state.volume = volume;
+
+            state_changed();
+            save_state();
         }
     });
 
@@ -54,6 +64,8 @@ void Device::begin() {
             _recording_device.stop();
         }
     });
+    _mqtt_connection.on_volume_changed([this](float volume) { _playback_device.set_volume(volume); });
+
     _udp_server.on_received([this](auto packet) {
         if (!_playback_device.is_playing()) {
             _playback_device.start();
@@ -109,6 +121,7 @@ void Device::load_state() {
     // Initialize defaults.
 
     _state.enabled = true;
+    _state.volume = -18;
 
     // Load previously stored values.
 
@@ -125,6 +138,12 @@ void Device::load_state() {
         _state.enabled = enabled;
     }
 
+    uint32_t raw_volume;
+    err = nvs_get_u32(handle, "volume", &raw_volume);
+    if (err == ESP_OK) {
+        *(uint32_t*)&_state.volume = raw_volume;
+    }
+
     nvs_close(handle);
 }
 
@@ -133,6 +152,9 @@ void Device::save_state() {
     ESP_ERROR_CHECK(nvs_open("storage", NVS_READWRITE, &handle));
 
     ESP_ERROR_CHECK(nvs_set_i8(handle, "enabled", int8_t(_state.enabled)));
+
+    auto raw_volume = *(uint32_t*)&_state.volume;
+    ESP_ERROR_CHECK(nvs_set_u32(handle, "volume", raw_volume));
 
     nvs_close(handle);
 }

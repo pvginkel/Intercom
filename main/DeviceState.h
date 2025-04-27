@@ -8,4 +8,5 @@ struct DeviceState {
     bool green_led{};
     bool playing{};
     bool recording{};
+    float volume{};
 };

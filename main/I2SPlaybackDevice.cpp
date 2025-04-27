@@ -29,6 +29,12 @@ void I2SPlaybackDevice::begin() {
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(_chan, &tx_std_cfg));
 }
 
+void I2SPlaybackDevice::set_volume(float volume) {
+    _auto_volume.set_target_db(volume);
+
+    _volume_changed.call(volume);
+}
+
 bool I2SPlaybackDevice::start() {
     bool result = false;
 
@@ -146,6 +152,8 @@ void I2SPlaybackDevice::write_task() {
             _buffer_exhausted.call();
             break;
         }
+
+        _auto_volume.process_block((int16_t *)buffer, buffer_len / sizeof(int16_t));
 
         _recording_device.feed_reference_samples(playback_time, buffer, buffer_len);
         playback_time += SAMPLES_TO_US(buffer_len / sizeof(int16_t));

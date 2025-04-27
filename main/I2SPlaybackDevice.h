@@ -3,6 +3,7 @@
 #include <atomic>
 
 #include "AudioMixer.h"
+#include "AutoVolume.h"
 #include "Callback.h"
 #include "I2SRecordingDevice.h"
 #include "Mutex.h"
@@ -17,13 +18,17 @@ class I2SPlaybackDevice {
     Mutex _lock;
     AudioMixer _buffer;
     Callback<void> _buffer_exhausted;
+    AutoVolume _auto_volume;
+    Callback<float> _volume_changed;
 
 public:
     I2SPlaybackDevice(I2SRecordingDevice& recording_device) : _recording_device(recording_device) {}
 
     void begin();
+    void set_volume(float volume);
     void on_playing_changed(function<void(bool)> func) { _playing_changed.add(func); }
     void on_buffer_exhausted(function<void()> func) { _buffer_exhausted.add(func); }
+    void on_volume_changed(function<void(float)> func) { _volume_changed.add(func); }
     bool is_playing() { return _playing; }
     bool start();
     bool stop();

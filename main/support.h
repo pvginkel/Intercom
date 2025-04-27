@@ -45,6 +45,8 @@ using namespace std;
 #define US_TO_SAMPLES(us) (((us) * 2) / 125)
 #define SAMPLES_TO_US(samples) (((samples) * 125) / 2)
 
+#define MS2S(ms) ((ms) / 1000.0f)
+
 #define esp_get_millis() uint32_t(esp_timer_get_time() / 1000ull)
 
 int getisoweek(tm& time_info);

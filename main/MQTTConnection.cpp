@@ -23,6 +23,8 @@ LOG_TAG(MQTTConnection);
 MQTTConnection::MQTTConnection(Queue *queue) : _queue(queue), _device_id(get_device_id()) {}
 
 void MQTTConnection::begin() {
+    ESP_ERROR_ASSERT(_configuration);
+
     esp_log_level_set("mqtt5_client", ESP_LOG_WARN);
 
     esp_mqtt5_connection_property_config_t connect_property = {
@@ -46,7 +48,7 @@ void MQTTConnection::begin() {
             {
                 .address =
                     {
-                        .uri = CONFIG_MQTT_BROKER_URL,
+                        .uri = _configuration->get_mqtt_endpoint().c_str(),
                     },
             },
         .session =
@@ -71,9 +73,9 @@ void MQTTConnection::begin() {
             },
     };
 
-    if (CONFIG_MQTT_USER_ID && *CONFIG_MQTT_USER_ID) {
-        config.credentials.username = CONFIG_MQTT_USER_ID;
-        config.credentials.authentication.password = CONFIG_MQTT_PASSWORD;
+    if (_configuration->get_mqtt_username().length()) {
+        config.credentials.username = _configuration->get_mqtt_username().c_str();
+        config.credentials.authentication.password = _configuration->get_mqtt_password().c_str();
     }
 
     _client = esp_mqtt_client_init(&config);

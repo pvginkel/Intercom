@@ -1,7 +1,7 @@
 import os
 import sys
 
-env_vars = ["WIFI_PASSWORD", "MQTT_PASSWORD"]
+env_vars = ["WIFI_PASSWORD"]
 
 content = "#pragma once\n\n"
 

@@ -11,7 +11,7 @@
 
 LOG_TAG(AutoVolume);
 
-#define MONITOR_AUTO_VOLUME 1
+#define MONITOR_AUTO_VOLUME 0
 
 AutoVolume::AutoVolume(float target_db) : _limiter_linear(pow(10.0f, LIMITER_DB / 20.0f)) {
     _target_db = target_db;

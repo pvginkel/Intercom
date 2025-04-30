@@ -6,7 +6,7 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 SIGNATURE=$(echo -n $TIMESTAMP | openssl dgst -sha256 -sign "$1" | base64)
 HOST=$3
 
-if [ "$HOST" == "" ]; then
+if [ "$HOST" = "" ]; then
     HOST=iotsupport.iotsupport.svc.cluster.local
 fi
 

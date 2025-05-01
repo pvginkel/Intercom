@@ -19,6 +19,9 @@ void Application::begin(bool silent) {
     ESP_LOGI(TAG, "Setting up the log manager");
 
     _log_manager.begin();
+    _controls.begin();
+
+    _controls.set_red_runner(new LedFadeRunner(0, 0, 500));
 
     setup_flash();
 
@@ -101,16 +104,15 @@ void Application::begin_after_initialization() {
     auto reset_reason = esp_reset_reason();
     ESP_LOGI(TAG, "esp_reset_reason: %s (%d)", esp_reset_reason_to_name(reset_reason), reset_reason);
 
-    // Enable the buttons.
-    _controls.begin();
-
     begin_app();
 }
 
 void Application::begin_app() {
     ESP_LOGI(TAG, "Startup complete");
 
-    _controls.begin();
+    // Enable the buttons.
+    _controls.set_enabled(true);
+    _controls.set_red_runner(new LedOffRunner());
 
     _device.begin();
 }

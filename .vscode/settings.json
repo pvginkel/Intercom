@@ -1,6 +1,6 @@
 {
   "idf.adapterTargetName": "esp32s3",
-  "idf.portWin": "COM8",
+  "idf.portWin": "COM6",
   "idf.flashType": "UART",
   "files.associations": {
     "array": "cpp",

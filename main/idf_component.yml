@@ -3,3 +3,5 @@ dependencies:
   esp-sr: ">=2.0.0"
   esp-network-support:
     path: ../../esp-libs/esp-network-support
+  esp-light-algorithms:
+    path: ../../esp-libs/esp-light-algorithms

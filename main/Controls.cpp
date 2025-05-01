@@ -4,12 +4,18 @@
 
 LOG_TAG(Controls);
 
+constexpr ledc_channel_t LR_CHANNEL = LEDC_CHANNEL_0;
+constexpr ledc_channel_t LG_CHANNEL = LEDC_CHANNEL_1;
+
+constexpr float GAMMA = 0.5f;
+
+static float gamma_correct(float level) { return pow(level, 1.0f / GAMMA); }
+
 void Controls::begin() {
-    gpio_config_t led_config = {
-        .pin_bit_mask = (1ull << CONFIG_DEVICE_LR_PIN) | (1ull << CONFIG_DEVICE_LG_PIN),
-        .mode = GPIO_MODE_OUTPUT,
-    };
-    gpio_config(&led_config);
+    _led_channel_manager.begin();
+
+    _led_channel_manager.configure_channel(CONFIG_DEVICE_LR_PIN, LR_CHANNEL);
+    _led_channel_manager.configure_channel(CONFIG_DEVICE_LG_PIN, LG_CHANNEL);
 
     gpio_config_t btn_config = {
         .pin_bit_mask = (1ull << CONFIG_DEVICE_PB_PIN),
@@ -37,64 +43,74 @@ void Controls::update() {
         _green_led_active_changed.call(false);
     }
 
-    _button.update();
+    if (_enabled) {
+        _button.update();
 
-    const auto millis = esp_get_millis();
+        const auto millis = esp_get_millis();
 
-    if (_button_down && millis - _button_down >= CONFIG_DEVICE_LONG_PRESS_MS) {
-        _button_down = 0;
-
-        _long_press.queue(_queue);
-    } else if (_button.fell()) {
-        if (_button_down) {
+        if (_button_down && millis - _button_down >= CONFIG_DEVICE_LONG_PRESS_MS) {
             _button_down = 0;
 
-            _press.queue(_queue);
+            _long_press.queue(_queue);
+        } else if (_button.fell()) {
+            if (_button_down) {
+                _button_down = 0;
+
+                _press.queue(_queue);
+            }
+        } else if (_button.rose()) {
+            _button_down = millis;
         }
-    } else if (_button.rose()) {
-        _button_down = millis;
     }
 }
 
-void Controls::set_red_led(LedAction* action) {
+void Controls::set_red_led(LedAction* action) { set_red_runner(create_led_action_runner(action)); }
+
+void Controls::set_red_runner(LedRunner* runner) {
     _red_led_active_changed.call(true);
 
     if (_red_led_runner) {
         delete _red_led_runner;
     }
 
-    _red_led_runner = create_led_action_runner(action, (gpio_num_t)CONFIG_DEVICE_LR_PIN);
+    _red_led_runner = runner;
+    _red_led_runner->on_led_changed(
+        [this](float level) { _led_channel_manager.set_level(LR_CHANNEL, gamma_correct(level)); });
 }
 
-void Controls::set_green_led(LedAction* action) {
+void Controls::set_green_led(LedAction* action) { set_green_runner(create_led_action_runner(action)); }
+
+void Controls::set_green_runner(LedRunner* runner) {
     _green_led_active_changed.call(true);
 
     if (_green_led_runner) {
         delete _green_led_runner;
     }
 
-    _green_led_runner = create_led_action_runner(action, (gpio_num_t)CONFIG_DEVICE_LG_PIN);
+    _green_led_runner = runner;
+    _green_led_runner->on_led_changed(
+        [this](float level) { _led_channel_manager.set_level(LG_CHANNEL, gamma_correct(level)); });
 }
 
-LedActionRunner* Controls::create_led_action_runner(LedAction* action, gpio_num_t pin) {
-    LedActionRunner* runner;
+LedRunner* Controls::create_led_action_runner(LedAction* action) {
+    LedRunner* runner;
 
     switch (action->state) {
         case LedState::On:
-            runner = new LedOnActionRunner(action);
+            runner = new LedOnRunner(action->duration);
             break;
         case LedState::Off:
-            runner = new LedOffActionRunner(action);
+            runner = new LedOffRunner();
             break;
         case LedState::Blink:
-            runner = new LedBlinkActionRunner(action);
+            runner = new LedBlinkRunner(action->duration, action->on, action->off);
             break;
         default:
             assert(false);
             return nullptr;
     }
 
-    runner->on_led_changed([pin](bool state) { gpio_set_level((gpio_num_t)pin, state); });
+    delete action;
 
     return runner;
 }

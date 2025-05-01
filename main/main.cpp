@@ -32,7 +32,7 @@ LOG_TAG(main);
 
 #endif
 
-extern "C" void app_main(void) {
+extern "C" void app_main() {
     // If we've restarted because of a brownout or watchdog reset,
     // perform a silent startup.
     const auto resetReason = esp_reset_reason();

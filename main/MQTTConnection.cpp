@@ -221,6 +221,10 @@ void MQTTConnection::handle_data(esp_mqtt_event_handle_t event) {
         } else {
             ESP_LOGE(TAG, "Failed to parse value '%s' as float", data.c_str());
         }
+    } else if (strcmp(sub_topic, "set/identify") == 0) {
+        ESP_LOGI(TAG, "Requested identification");
+
+        _identify_requested.queue(_queue);
     } else {
         ESP_LOGE(TAG, "Unknown topic %s", topic.c_str());
     }

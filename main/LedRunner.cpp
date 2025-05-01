@@ -71,6 +71,7 @@ bool LedFadeRunner::update() {
     const auto millis = esp_get_millis();
 
     if (_max_runtime && millis >= _max_runtime) {
+        set_led_level(0);
         return false;
     }
 

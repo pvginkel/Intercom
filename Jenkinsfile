@@ -30,7 +30,9 @@ withCredentials([
                         // relative folder. Not sure why. Instead it expects the
                         // components to be in the components folder.
                         sh 'mkdir -p components'
-                        sh 'cp -a ../esp-libs/{esp-support,esp-network-support,esp-light-algorithms} components'
+                        sh 'cp -a ../esp-libs/esp-support components'
+                        sh 'cp -a ../esp-libs/esp-network-support components'
+                        sh 'cp -a ../esp-libs/esp-light-algorithms components'
 
                         sh 'chmod +x scripts/dockerbuild.sh'
                         sh '/opt/esp/entrypoint.sh scripts/dockerbuild.sh'

@@ -32,7 +32,5 @@ private:
     void do_begin(bool silent);
     void begin_network();
     void begin_network_available();
-    void begin_mqtt();
     void begin_after_initialization();
-    void begin_app();
 };

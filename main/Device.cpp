@@ -117,7 +117,11 @@ void Device::begin() {
     _controls.on_press([this]() { _mqtt_connection.send_action(DeviceAction::Click); });
     _controls.on_long_press([this]() { _mqtt_connection.send_action(DeviceAction::LongClick); });
 
-    state_changed();
+    _mqtt_connection.on_connected_changed([this](auto state) {
+        if (state.connected) {
+            state_changed();
+        }
+    });
 }
 
 void Device::state_changed() { _mqtt_connection.send_state(_state); }

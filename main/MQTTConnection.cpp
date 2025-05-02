@@ -34,7 +34,7 @@ void MQTTConnection::begin() {
         .topic_alias_maximum = 2,
         .request_resp_info = true,
         .request_problem_info = true,
-        .will_delay_interval = 10,
+        .will_delay_interval = 0,
         .message_expiry_interval = 10,
         .payload_format_indicator = true,
     };
@@ -57,7 +57,6 @@ void MQTTConnection::begin() {
                     {
                         .topic = state_topic.c_str(),
                         .msg = LAST_WILL_MESSAGE,
-                        .msg_len = strlen(LAST_WILL_MESSAGE),
                         .qos = QOS_MIN_ONE,
                         .retain = true,
                     },

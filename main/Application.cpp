@@ -74,11 +74,8 @@ void Application::begin_network_available() {
     }
 
     _udp_server.begin();
+    _device.begin();
 
-    begin_mqtt();
-}
-
-void Application::begin_mqtt() {
     ESP_LOGI(TAG, "Connecting to MQTT");
 
     _mqtt_connection.on_connected_changed([this](auto state) {
@@ -104,17 +101,11 @@ void Application::begin_after_initialization() {
     auto reset_reason = esp_reset_reason();
     ESP_LOGI(TAG, "esp_reset_reason: %s (%d)", esp_reset_reason_to_name(reset_reason), reset_reason);
 
-    begin_app();
-}
-
-void Application::begin_app() {
     ESP_LOGI(TAG, "Startup complete");
 
     // Enable the buttons.
     _controls.set_enabled(true);
     _controls.set_red_runner(new LedOffRunner());
-
-    _device.begin();
 }
 
 void Application::process() {

@@ -78,11 +78,11 @@ void I2SRecordingDevice::begin_afe() {
     assert(afe_config->aec_init == true);
     // The mode of aec, AEC_MODE_SR_LOW_COST or AEC_MODE_SR_HIGH_PERF
     // afe_config->aec_mode;
-    afe_config->aec_mode = AEC_MODE_VOIP_LOW_COST;
+    afe_config->aec_mode = AEC_MODE_VOIP_HIGH_PERF;
     // The filter length of aec
     // afe_config->aec_filter_length;
     assert(afe_config->aec_filter_length == 4);
-    afe_config->aec_filter_length = 8;
+    // afe_config->aec_filter_length = 8;
 
     /********** SE(Speech Enhancement, microphone array processing) **********/
     // Whether to init se

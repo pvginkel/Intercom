@@ -114,6 +114,8 @@ void Device::begin() {
         _controls.set_green_runner(new LedFadeRunner(1, 5000, 300));
     });
 
+    _mqtt_connection.on_restart_requested([]() { esp_restart(); });
+
     _controls.on_press([this]() { _mqtt_connection.send_action(DeviceAction::Click); });
     _controls.on_long_press([this]() { _mqtt_connection.send_action(DeviceAction::LongClick); });
 

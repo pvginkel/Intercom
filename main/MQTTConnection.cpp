@@ -4,7 +4,9 @@
 
 #include <charconv>
 
+#include "esp_app_format.h"
 #include "esp_mac.h"
+#include "esp_ota_ops.h"
 
 LOG_TAG(MQTTConnection);
 
@@ -224,6 +226,10 @@ void MQTTConnection::handle_data(esp_mqtt_event_handle_t event) {
         ESP_LOGI(TAG, "Requested identification");
 
         _identify_requested.queue(_queue);
+    } else if (strcmp(sub_topic, "set/restart") == 0) {
+        ESP_LOGI(TAG, "Requested restart");
+
+        _restart_requested.queue(_queue);
     } else {
         ESP_LOGE(TAG, "Unknown topic %s", topic.c_str());
     }
@@ -266,6 +272,7 @@ void MQTTConnection::publish_configuration() {
     cJSON_AddStringToObject(device, "manufacturer", DEVICE_MANUFACTURER);
     cJSON_AddStringToObject(device, "model", DEVICE_MODEL);
     cJSON_AddStringToObject(device, "name", _configuration->get_device_name().c_str());
+    cJSON_AddStringToObject(device, "firmware_version", get_firmware_version().c_str());
 
     cJSON_AddStringToObject(*root, "endpoint", _udp_endpoint.c_str());
 
@@ -323,6 +330,15 @@ LedAction *MQTTConnection::parse_led_action(const string &data) {
     }
 
     return new LedAction{.state = state, .duration = duration, .on = on, .off = off};
+}
+
+string MQTTConnection::get_firmware_version() {
+    const auto running_partition = esp_ota_get_running_partition();
+
+    esp_app_desc_t running_app_info;
+    ESP_ERROR_CHECK(esp_ota_get_partition_description(running_partition, &running_app_info));
+
+    return running_app_info.version;
 }
 
 void MQTTConnection::send_state(DeviceState &state) {

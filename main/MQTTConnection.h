@@ -35,6 +35,7 @@ class MQTTConnection {
     Callback<const string &> _remote_endpoint_removed;
     Callback<float> _volume_changed;
     Callback<void> _identify_requested;
+    Callback<void> _restart_requested;
 
 public:
     MQTTConnection(Queue *queue);
@@ -53,6 +54,7 @@ public:
     void on_remote_endpoint_removed(function<void(const string &)> func) { _remote_endpoint_removed.add(func); }
     void on_volume_changed(function<void(float)> func) { _volume_changed.add(func); }
     void on_identify_requested(function<void()> func) { _identify_requested.add(func); }
+    void on_restart_requested(function<void()> func) { _restart_requested.add(func); }
 
 private:
     void event_handler(esp_event_base_t eventBase, int32_t eventId, void *eventData);
@@ -62,4 +64,5 @@ private:
     void unsubscribe(const string &topic);
     void publish_configuration();
     LedAction *parse_led_action(const string &data);
+    string get_firmware_version();
 };

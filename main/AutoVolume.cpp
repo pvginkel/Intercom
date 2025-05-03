@@ -11,7 +11,7 @@
 
 LOG_TAG(AutoVolume);
 
-#define MONITOR_AUTO_VOLUME 1
+#define MONITOR_AUTO_VOLUME 0
 
 AutoVolume::AutoVolume() : _limiter_linear(pow(10.0f, LIMITER_DB / 20.0f)) {
     const size_t lookahead_samples = (size_t)US_TO_SAMPLES(LOOKAHEAD_MS * 1000.0f);

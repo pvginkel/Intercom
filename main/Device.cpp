@@ -130,7 +130,7 @@ void Device::load_state() {
     // Initialize defaults.
 
     _state.enabled = true;
-    _state.volume = -18;
+    _state.volume = -16;
 
     // Load previously stored values.
 

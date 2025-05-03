@@ -30,7 +30,7 @@ void I2SPlaybackDevice::begin() {
 }
 
 void I2SPlaybackDevice::set_volume(float volume) {
-    _auto_volume.set_target_db(volume);
+    _auto_volume.set_offset_db(volume);
 
     _volume_changed.call(volume);
 }

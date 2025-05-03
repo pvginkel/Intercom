@@ -11,8 +11,10 @@
  */
 class AutoVolume {
     // Delay applied to audio so gain precedes peaks (ms)
-    static constexpr float LOOKAHEAD_MS = 1.0f;
+    static constexpr float LOOKAHEAD_MS = 2.0f;
 
+    // The target Db to adjust to.
+    static constexpr float TARGET_DB = -18.0f;
     // Attack time (ms)  – how fast attenuation ramps down
     static constexpr float ATTACK = MS2S(10.0f);
     // Release time (ms) – how fast it recovers
@@ -20,11 +22,11 @@ class AutoVolume {
     // RMS window for level detection (ms)
     static constexpr float WINDOW = MS2S(20.0f);
     // Hold time after each attenuation burst (ms)
-    static constexpr float HOLD = MS2S(50.0f);
+    static constexpr float HOLD = MS2S(80.0f);
     // Soft-knee half-width in dB (0 = hard)
-    static constexpr float KNEE_DB = 3.0f;
+    static constexpr float KNEE_DB = 6.0f;
     // Maximum attenuation (positive number, dB)
-    static constexpr float MAX_ATTEN_DB = 25.0f;
+    static constexpr float MAX_ATTEN_DB = 24.0f;
     // Brick-wall peak limit (negative, dBFS)
     static constexpr float LIMITER_DB = -0.1f;
 
@@ -32,7 +34,7 @@ public:
     /**
      * @param targetDb Desired long-term RMS in dBFS  (e.g. -18).
      */
-    AutoVolume(float targetDb = -18.0f);
+    AutoVolume();
 
     /** Reset envelopes, gain and delay-line (call on fs/parameter change). */
     void reset();
@@ -40,14 +42,14 @@ public:
     /** In-place processing of a mono block of 32-bit floats in [-1,1]. */
     void process_block(int16_t* buffer, size_t samples);
 
-    float get_target_db() { return _target_db; }
-    void set_target_db(float target_db) { _target_db = target_db; }
+    float get_offset_db() { return _offset_db; }
+    void set_offset_db(float offset_db) { _offset_db = offset_db; }
 
 private:
     /* constants */
     const float _limiter_linear;
 
-    float _target_db;
+    float _offset_db{};
     // RMS envelope (linear)
     float _envelope = 0.0f;
     // Applied attenuation dB

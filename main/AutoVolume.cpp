@@ -11,11 +11,9 @@
 
 LOG_TAG(AutoVolume);
 
-#define MONITOR_AUTO_VOLUME 0
+#define MONITOR_AUTO_VOLUME 1
 
-AutoVolume::AutoVolume(float target_db) : _limiter_linear(pow(10.0f, LIMITER_DB / 20.0f)) {
-    _target_db = target_db;
-
+AutoVolume::AutoVolume() : _limiter_linear(pow(10.0f, LIMITER_DB / 20.0f)) {
     const size_t lookahead_samples = (size_t)US_TO_SAMPLES(LOOKAHEAD_MS * 1000.0f);
 
     _delay_buffer.assign(lookahead_samples, 0.0f);
@@ -68,7 +66,7 @@ void AutoVolume::process_block(int16_t *buffer, size_t samples) {
 
     /*---------------- 3. Desired attenuation (soft knee) ---------*/
     const float env_db = 20.0f * log10f(_envelope + numeric_limits<float>::min());  // denormal-safe
-    const float diff_db = env_db - _target_db;                                      // + = loud
+    const float diff_db = env_db - TARGET_DB;                                       // + = loud
     float err_db = 0.0f;                                                            // ≤ 0
 
     if (diff_db > 0.0f) {  // only attenuate
@@ -97,6 +95,9 @@ void AutoVolume::process_block(int16_t *buffer, size_t samples) {
     _gain_db = clamp(_gain_db, -MAX_ATTEN_DB, 0.0f);
     _gain_linear = pow(10.0f, _gain_db / 20.0f);
 
+    float output_gain_db = _gain_db + _offset_db;
+    float output_gain_linear = pow(10.0f, output_gain_db / 20.0f);
+
     /*---------------- 5. Apply gain + look-ahead + limiter -------*/
     for (size_t i = 0; i < samples; ++i) {
         float dry = (float)buffer[i] / INT16_MAX;
@@ -106,7 +107,7 @@ void AutoVolume::process_block(int16_t *buffer, size_t samples) {
         _delay_buffer[_delay_offset] = dry;
         _delay_offset = (_delay_offset + 1) % _delay_buffer.size();
 
-        float wet = delayed * _gain_linear;
+        float wet = delayed * output_gain_linear;
 
         /* peak limiter (hard clip) */
         if (wet > _limiter_linear)

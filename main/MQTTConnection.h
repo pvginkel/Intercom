@@ -63,6 +63,19 @@ private:
     void subscribe(const string &topic);
     void unsubscribe(const string &topic);
     void publish_configuration();
+    void publish_json(cJSON *root, const string &topic, bool retain);
+    void publish_discovery();
+    void publish_switch_discovery(const char *name, const char *command_topic, const char *state_property,
+                                  const char *icon, const char *entity_category, const char *device_class);
+    void publish_binary_sensor_discovery(const char *name, const char *state_property, const char *icon,
+                                         const char *entity_category, const char *device_class);
+    void publish_number_discovery(const char *name, const char *command_topic, const char *state_property,
+                                  const char *icon, const char *entity_category, const char *device_class,
+                                  const char *unit_of_measurement, double min, double max, double step);
+    void publish_button_discovery(const char *name, const char *command_topic, const char *icon,
+                                  const char *entity_category, const char *device_class);
+    cJSON_Data create_discovery(const char *component, const char *name, const char *object_id, const char *icon,
+                                const char *entity_category, const char *device_class);
     LedAction *parse_led_action(const string &data);
     string get_firmware_version();
 };

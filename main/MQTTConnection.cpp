@@ -291,8 +291,8 @@ void MQTTConnection::publish_json(cJSON *root, const string &topic, bool retain)
 
 void MQTTConnection::publish_discovery() {
     publish_number_discovery("Volume", "volume", "volume", "mdi:knob", "config", "sound_pressure", "Db", -20, -6, 0.5);
-    publish_binary_sensor_discovery("Playing", "playing", "mdi:play", "diagnostic", nullptr);
-    publish_binary_sensor_discovery("Recording", "recording", "mdi:record", "diagnostic", nullptr);
+    publish_binary_sensor_discovery("Playing", "playing", "mdi:play", "diagnostic", nullptr, false);
+    publish_binary_sensor_discovery("Recording", "recording", "mdi:record", "diagnostic", nullptr, false);
     publish_switch_discovery("Enabled", "enabled", "enabled", "mdi:toggle-switch", "config", nullptr);
     publish_button_discovery("Identify", "identify", nullptr, "config", "identify");
     publish_button_discovery("Restart", "restart", nullptr, "config", "restart");
@@ -301,7 +301,7 @@ void MQTTConnection::publish_discovery() {
 void MQTTConnection::publish_number_discovery(const char *name, const char *command_topic, const char *state_property,
                                               const char *icon, const char *entity_category, const char *device_class,
                                               const char *unit_of_measurement, double min, double max, double step) {
-    auto root = create_discovery("number", name, state_property, icon, entity_category, device_class);
+    auto root = create_discovery("number", name, state_property, icon, entity_category, device_class, true);
 
     if (unit_of_measurement) {
         cJSON_AddStringToObject(*root, "unit_of_measurement", unit_of_measurement);
@@ -318,8 +318,10 @@ void MQTTConnection::publish_number_discovery(const char *name, const char *comm
 }
 
 void MQTTConnection::publish_binary_sensor_discovery(const char *name, const char *state_property, const char *icon,
-                                                     const char *entity_category, const char *device_class) {
-    auto root = create_discovery("binary_sensor", name, state_property, icon, entity_category, device_class);
+                                                     const char *entity_category, const char *device_class,
+                                                     bool enabled_by_default) {
+    auto root = create_discovery("binary_sensor", name, state_property, icon, entity_category, device_class,
+                                 enabled_by_default);
 
     cJSON_AddBoolToObject(*root, "payload_on", true);
     cJSON_AddBoolToObject(*root, "payload_off", false);
@@ -332,7 +334,7 @@ void MQTTConnection::publish_binary_sensor_discovery(const char *name, const cha
 
 void MQTTConnection::publish_switch_discovery(const char *name, const char *command_topic, const char *state_property,
                                               const char *icon, const char *entity_category, const char *device_class) {
-    auto root = create_discovery("switch", name, state_property, icon, entity_category, device_class);
+    auto root = create_discovery("switch", name, state_property, icon, entity_category, device_class, true);
 
     cJSON_AddStringToObject(*root, "command_topic",
                             strformat("intercom/client/%s/set/%s", _device_id.c_str(), command_topic).c_str());
@@ -346,7 +348,7 @@ void MQTTConnection::publish_switch_discovery(const char *name, const char *comm
 
 void MQTTConnection::publish_button_discovery(const char *name, const char *command_topic, const char *icon,
                                               const char *entity_category, const char *device_class) {
-    auto root = create_discovery("button", name, command_topic, icon, entity_category, device_class);
+    auto root = create_discovery("button", name, command_topic, icon, entity_category, device_class, true);
 
     cJSON_AddStringToObject(*root, "command_topic",
                             strformat("intercom/client/%s/set/%s", _device_id.c_str(), command_topic).c_str());
@@ -356,7 +358,8 @@ void MQTTConnection::publish_button_discovery(const char *name, const char *comm
 }
 
 cJSON_Data MQTTConnection::create_discovery(const char *component, const char *name, const char *object_id,
-                                            const char *icon, const char *entity_category, const char *device_class) {
+                                            const char *icon, const char *entity_category, const char *device_class,
+                                            bool enabled_by_default) {
     // Device classes can be found here: https://www.home-assistant.io/integrations/sensor/#device-class.
     // Entity category is either config or diagnostic.
     // MDI icons can be found here: https://pictogrammers.com/library/mdi/.
@@ -396,6 +399,12 @@ cJSON_Data MQTTConnection::create_discovery(const char *component, const char *n
     cJSON_AddStringToObject(device, "sw_version", get_firmware_version().c_str());
 
     cJSON_AddStringToObject(root, "unique_id", strformat("%s_%s_%s", _device_id.c_str(), component, object_id).c_str());
+    cJSON_AddStringToObject(root, "object_id",
+                            strformat("%s_%s", _configuration->get_device_entity_id().c_str(), object_id).c_str());
+
+    if (!enabled_by_default) {
+        cJSON_AddBoolToObject(root, "enabled_by_default", false);
+    }
 
     return root;
 }

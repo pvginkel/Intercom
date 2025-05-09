@@ -272,16 +272,16 @@ void I2SRecordingDevice::read_task() {
     const auto feed_nch = _afe_handle->get_feed_channel_num(_afe_data);
     assert(feed_nch == 2);
     const auto feed_buffer_len = feed_chunksize * feed_nch * sizeof(int16_t);
-    const auto feed_buffer = (int16_t *)malloc(feed_buffer_len);
+    const auto feed_buffer = (int16_t *)heap_caps_malloc(feed_buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(feed_buffer);
-    const auto reference_buffer = (int16_t *)malloc(feed_buffer_len);
+    const auto reference_buffer = (int16_t *)heap_caps_malloc(feed_buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(reference_buffer);
     size_t feed_buffer_offset = 0;
     auto smoothed_peak = 1.0f;
 
     // We keep the sample buffer equal to the feed buffer to keep latency down.
     const auto buffer_len = feed_chunksize * 1 /* mono */ * sizeof(int32_t);
-    const auto buffer = malloc(buffer_len);
+    const auto buffer = heap_caps_malloc(buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(buffer);
 
     ESP_ERROR_CHECK(i2s_channel_enable(_chan));
@@ -370,6 +370,7 @@ void I2SRecordingDevice::read_task() {
     ESP_ERROR_CHECK(i2s_channel_disable(_chan));
 
     free(buffer);
+    free(reference_buffer);
     free(feed_buffer);
 }
 

@@ -101,7 +101,7 @@ void I2SPlaybackDevice::write_task() {
     auto task_guard = _task_lock.take();
 
     const auto buffer_len = CONFIG_DEVICE_AUDIO_CHUNK_LEN;
-    const auto buffer = (uint8_t *)malloc(buffer_len);
+    const auto buffer = (uint8_t *)heap_caps_malloc(buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(buffer);
 
     // Wait a little bit to give the buffer some time to collect data.

@@ -362,7 +362,7 @@ void MQTTConnection::publish_json(cJSON *root, const string &topic, bool retain)
 }
 
 void MQTTConnection::publish_discovery() {
-    publish_number_discovery("Volume", "volume", "volume", "mdi:knob", "config", "sound_pressure", "Db", -20, -6, 0.5);
+    publish_number_discovery("Volume", "volume", "volume", "mdi:knob", "config", "sound_pressure", "Db", 0, 1, 0.1);
     publish_binary_sensor_discovery("Playing", "playing", "mdi:play", "diagnostic", nullptr, false);
     publish_binary_sensor_discovery("Recording", "recording", "mdi:record", "diagnostic", nullptr, false);
     publish_switch_discovery("Enabled", "enabled", "enabled", "mdi:toggle-switch", "config", nullptr);

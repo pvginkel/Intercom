@@ -145,24 +145,3 @@ esp_err_t parse_endpoint(sockaddr_in* addr, const char* input) {
 
     return ESP_OK;
 }
-
-esp_err_t nvs_get_i1(nvs_handle_t c_handle, const char* key, bool* out_value) {
-    int8_t real_value;
-    const auto err = nvs_get_i8(c_handle, key, &real_value);
-    if (err == ESP_OK) {
-        *out_value = !!real_value;
-    }
-    return err;
-}
-
-esp_err_t nvs_set_i1(nvs_handle_t handle, const char* key, bool value) {
-    return nvs_set_i8(handle, key, int8_t(value));
-}
-
-esp_err_t nvs_get_f32(nvs_handle_t c_handle, const char* key, float* out_value) {
-    return nvs_get_u32(c_handle, key, (uint32_t*)out_value);
-}
-
-esp_err_t nvs_set_f32(nvs_handle_t handle, const char* key, float value) {
-    return nvs_set_u32(handle, key, *(uint32_t*)&value);
-}

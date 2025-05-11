@@ -126,9 +126,3 @@ esp_err_t esp_http_download_string(const esp_http_client_config_t& config, strin
 esp_err_t esp_http_upload_string(const esp_http_client_config_t& config, const char* const data);
 char const* esp_reset_reason_to_name(esp_reset_reason_t reason);
 esp_err_t parse_endpoint(sockaddr_in* addr, const char* input);
-
-esp_err_t nvs_get_i1(nvs_handle_t c_handle, const char* key, bool* out_value);
-esp_err_t nvs_set_i1(nvs_handle_t handle, const char* key, bool value);
-
-esp_err_t nvs_get_f32(nvs_handle_t c_handle, const char* key, float* out_value);
-esp_err_t nvs_set_f32(nvs_handle_t handle, const char* key, float value);

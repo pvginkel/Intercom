@@ -2,6 +2,7 @@
 
 #include <atomic>
 
+#include "AudioConfiguration.h"
 #include "AudioMixer.h"
 #include "AutoVolume.h"
 #include "Callback.h"
@@ -20,11 +21,16 @@ class I2SPlaybackDevice {
     Callback<void> _buffer_exhausted;
     AutoVolume _auto_volume;
     Callback<float> _volume_changed;
+    uint8_t* _write_buffer;
+    size_t _write_buffer_len;
+    float _volume_scale_low;
+    float _volume_scale_high;
+    bool _auto_volume_enabled;
 
 public:
     I2SPlaybackDevice(I2SRecordingDevice& recording_device) : _recording_device(recording_device) {}
 
-    void begin();
+    void begin(const AudioConfiguration& audio_config);
     void set_volume(float volume);
     void on_playing_changed(function<void(bool)> func) { _playing_changed.add(func); }
     void on_buffer_exhausted(function<void()> func) { _buffer_exhausted.add(func); }

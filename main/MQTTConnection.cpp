@@ -232,9 +232,81 @@ void MQTTConnection::handle_data(esp_mqtt_event_handle_t event) {
         ESP_LOGI(TAG, "Requested restart");
 
         _restart_requested.queue(_queue);
+    } else if (strcmp(sub_topic, "set/audio_config") == 0) {
+        ESP_LOGI(TAG, "Received audio configuration %s", data.c_str());
+
+        AudioConfiguration config;
+        if (parse_audio_configuration(data, config)) {
+            _audio_configuration_changed.call(config);
+        } else {
+            ESP_LOGE(TAG, "Failed to parse audio configuration");
+        }
     } else {
         ESP_LOGE(TAG, "Unknown topic %s", topic.c_str());
     }
+}
+
+bool MQTTConnection::parse_audio_configuration(const string &json, AudioConfiguration &config) {
+    cJSON_Data root = {cJSON_Parse(json.c_str())};
+    if (!*root) {
+        return false;
+    }
+
+    auto item = cJSON_GetObjectItem(*root, "volume_scale_low");
+    if (!cJSON_IsNumber(item)) {
+        return false;
+    }
+    config.volume_scale_low = (float)item->valuedouble;
+
+    item = cJSON_GetObjectItem(*root, "volume_scale_high");
+    if (!cJSON_IsNumber(item)) {
+        return false;
+    }
+    config.volume_scale_high = (float)item->valuedouble;
+
+    item = cJSON_GetObjectItem(*root, "enable_audio_processing");
+    if (!cJSON_IsBool(item)) {
+        return false;
+    }
+    config.enable_audio_processing = cJSON_IsTrue(item);
+
+    item = cJSON_GetObjectItem(*root, "audio_buffer_ms");
+    if (!cJSON_IsNumber(item)) {
+        return false;
+    }
+    config.audio_buffer_ms = (uint32_t)item->valueint;
+
+    item = cJSON_GetObjectItem(*root, "microphone_gain_bits");
+    if (!cJSON_IsNumber(item)) {
+        return false;
+    }
+    config.microphone_gain_bits = (uint8_t)item->valueint;
+
+    item = cJSON_GetObjectItem(*root, "recording_auto_volume_enabled");
+    if (!cJSON_IsBool(item)) {
+        return false;
+    }
+    config.recording_auto_volume_enabled = cJSON_IsTrue(item);
+
+    item = cJSON_GetObjectItem(*root, "recording_smoothing_factor");
+    if (!cJSON_IsNumber(item)) {
+        return false;
+    }
+    config.recording_smoothing_factor = (float)item->valuedouble;
+
+    item = cJSON_GetObjectItem(*root, "playback_auto_volume_enabled");
+    if (!cJSON_IsBool(item)) {
+        return false;
+    }
+    config.playback_auto_volume_enabled = cJSON_IsTrue(item);
+
+    item = cJSON_GetObjectItem(*root, "playback_target_db");
+    if (!cJSON_IsNumber(item)) {
+        return false;
+    }
+    config.playback_target_db = (float)item->valuedouble;
+
+    return true;
 }
 
 void MQTTConnection::subscribe(const string &topic) {
@@ -469,6 +541,8 @@ string MQTTConnection::get_firmware_version() {
 void MQTTConnection::send_state(DeviceState &state) {
     ESP_LOGI(TAG, "Publishing new state");
 
+    ESP_ERROR_ASSERT(_client);
+
     cJSON_Data root = {cJSON_CreateObject()};
 
     cJSON_AddBoolToObject(*root, "online", true);
@@ -478,6 +552,20 @@ void MQTTConnection::send_state(DeviceState &state) {
     cJSON_AddBoolToObject(*root, "playing", state.playing);
     cJSON_AddBoolToObject(*root, "recording", state.recording);
     cJSON_AddNumberToObject(*root, "volume", state.volume);
+
+    const auto audio_config = cJSON_AddObjectToObject(*root, "audio_config");
+    cJSON_AddNumberToObject(audio_config, "volume_scale_low", state.audio_config.volume_scale_low);
+    cJSON_AddNumberToObject(audio_config, "volume_scale_high", state.audio_config.volume_scale_high);
+    cJSON_AddNumberToObject(audio_config, "playback_target_db", state.audio_config.playback_target_db);
+    cJSON_AddBoolToObject(audio_config, "enable_audio_processing", state.audio_config.enable_audio_processing);
+    cJSON_AddNumberToObject(audio_config, "audio_buffer_ms", state.audio_config.audio_buffer_ms);
+    cJSON_AddNumberToObject(audio_config, "microphone_gain_bits", state.audio_config.microphone_gain_bits);
+    cJSON_AddBoolToObject(audio_config, "recording_auto_volume_enabled",
+                          state.audio_config.recording_auto_volume_enabled);
+    cJSON_AddNumberToObject(audio_config, "recording_smoothing_factor", state.audio_config.recording_smoothing_factor);
+    cJSON_AddBoolToObject(audio_config, "playback_auto_volume_enabled",
+                          state.audio_config.playback_auto_volume_enabled);
+    cJSON_AddNumberToObject(audio_config, "playback_target_db", state.audio_config.playback_target_db);
 
     auto json = cJSON_PrintUnformatted(*root);
 
@@ -492,6 +580,10 @@ void MQTTConnection::send_state(DeviceState &state) {
 
 void MQTTConnection::send_action(DeviceAction action) {
     const auto data = action == DeviceAction::Click ? "click" : "long_click";
+
+    ESP_LOGI(TAG, "Sending action '%s'", data);
+
+    ESP_ERROR_ASSERT(_client);
 
     auto topic = _topic_prefix + "set/action";
     auto result = esp_mqtt_client_publish(_client, topic.c_str(), data, 0, QOS_MIN_ONE, false);

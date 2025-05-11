@@ -2,8 +2,6 @@
 
 #include "Device.h"
 
-#include "nvs_flash.h"
-
 LOG_TAG(Device);
 
 Device::Device(MQTTConnection& mqtt_connection, UDPServer& udp_server, Controls& controls)
@@ -18,17 +16,27 @@ Device::Device(MQTTConnection& mqtt_connection, UDPServer& udp_server, Controls&
 void Device::begin() {
     load_state();
 
-    _playback_device.set_volume(_state.volume);
+    _playback_device.on_buffer_exhausted([this]() { _playback_device.stop(); });
+
+    _recording_device.on_data_available([this](auto data) { send_audio(data); });
+
+    _recording_device.begin(_state.audio_config);
 
     _recording_device.on_recording_changed([this](bool recording) {
         if (_state.recording != recording) {
             _state.recording = recording;
+
             state_changed();
         }
     });
+
+    _playback_device.begin(_state.audio_config);
+    _playback_device.set_volume(_state.volume);
+
     _playback_device.on_playing_changed([this](bool playing) {
         if (_state.playing != playing) {
             _state.playing = playing;
+
             state_changed();
         }
     });
@@ -40,13 +48,6 @@ void Device::begin() {
             save_state();
         }
     });
-
-    _playback_device.on_buffer_exhausted([this]() { _playback_device.stop(); });
-
-    _recording_device.on_data_available([this](auto data) { send_audio(data); });
-
-    _recording_device.begin();
-    _playback_device.begin();
 
     _mqtt_connection.on_enabled_changed([this](bool enabled) {
         _state.enabled = enabled;
@@ -79,10 +80,12 @@ void Device::begin() {
 
     _controls.on_red_led_active_changed([this](bool active) {
         _state.red_led = active;
+
         state_changed();
     });
     _controls.on_green_led_active_changed([this](bool active) {
         _state.green_led = active;
+
         state_changed();
     });
 
@@ -124,18 +127,47 @@ void Device::begin() {
             state_changed();
         }
     });
+
+    _mqtt_connection.on_audio_configuration_changed([this](auto config) {
+        _state.audio_config = config;
+
+        save_state();
+
+        ESP_LOGI(TAG, "Audio configuration changed; restarting device");
+
+        esp_restart();
+    });
 }
 
-void Device::state_changed() { _mqtt_connection.send_state(_state); }
+void Device::state_changed() {
+    if (_mqtt_connection.is_connected()) {
+        _mqtt_connection.send_state(_state);
+    }
+}
+
+#define NVS_GET(typename, name, entry, default)                    \
+    {                                                              \
+        decltype(_state.entry) value;                              \
+        const auto err = nvs_get_##typename(handle, name, &value); \
+        if (err == ESP_OK) {                                       \
+            _state.entry = value;                                  \
+        } else {                                                   \
+            _state.entry = default;                                \
+        }                                                          \
+    }
+
+#define NVS_GET_FLOAT(name, entry, default)                 \
+    {                                                       \
+        uint32_t value;                                     \
+        const auto err = nvs_get_u32(handle, name, &value); \
+        if (err == ESP_OK) {                                \
+            *(uint32_t*)&_state.entry = value;              \
+        } else {                                            \
+            _state.entry = default;                         \
+        }                                                   \
+    }
 
 void Device::load_state() {
-    // Initialize defaults.
-
-    _state.enabled = true;
-    _state.volume = -16;
-
-    // Load previously stored values.
-
     nvs_handle_t handle;
     auto err = nvs_open("storage", NVS_READONLY, &handle);
     if (err == ESP_ERR_NVS_NOT_FOUND) {
@@ -143,29 +175,51 @@ void Device::load_state() {
     }
     ESP_ERROR_CHECK(err);
 
-    int8_t enabled;
-    err = nvs_get_i8(handle, "enabled", &enabled);
-    if (err == ESP_OK) {
-        _state.enabled = enabled;
-    }
+    NVS_GET(i1, "enabled", enabled, true);
+    NVS_GET(f32, "volume", volume, -16);
 
-    uint32_t raw_volume;
-    err = nvs_get_u32(handle, "volume", &raw_volume);
-    if (err == ESP_OK) {
-        *(uint32_t*)&_state.volume = raw_volume;
-    }
+    NVS_GET(f32, "play_vol_low", audio_config.volume_scale_low, -20);
+    NVS_GET(f32, "play_vol_high", audio_config.volume_scale_high, -10);
+    NVS_GET(i1, "en_audio_proc", audio_config.enable_audio_processing, true);
+    NVS_GET(u32, "audio_buf_ms", audio_config.audio_buffer_ms, 400)
+    NVS_GET(u8, "mic_gain_bits", audio_config.microphone_gain_bits, 4);
+    NVS_GET(i1, "rec_autovol_en", audio_config.recording_auto_volume_enabled, true);
+    NVS_GET(f32, "rec_smooth_fac", audio_config.recording_smoothing_factor, 0.1f);
+    NVS_GET(i1, "play_autovol_en", audio_config.playback_auto_volume_enabled, true);
+    NVS_GET(f32, "play_target_db", audio_config.playback_target_db, -18);
 
     nvs_close(handle);
+
+    ESP_LOGI(TAG, "Loaded audio configuration:");
+    ESP_LOGI(TAG, "  Volume scale low: %f", _state.audio_config.volume_scale_low);
+    ESP_LOGI(TAG, "  Volume scale high: %f", _state.audio_config.volume_scale_high);
+    ESP_LOGI(TAG, "  Enable audio processing: %s", _state.audio_config.enable_audio_processing ? "true" : "false");
+    ESP_LOGI(TAG, "  Audio buffer (ms): %" PRIu32, _state.audio_config.audio_buffer_ms);
+    ESP_LOGI(TAG, "  Microphone gain (bits): %d", _state.audio_config.microphone_gain_bits);
+    ESP_LOGI(TAG, "  Recording auto volume enabled: %s",
+             _state.audio_config.recording_auto_volume_enabled ? "true" : "false");
+    ESP_LOGI(TAG, "  Recording smoothing factor: %f", _state.audio_config.recording_smoothing_factor);
+    ESP_LOGI(TAG, "  Playback auto volume enabled: %s",
+             _state.audio_config.playback_auto_volume_enabled ? "true" : "false");
+    ESP_LOGI(TAG, "  Playback target Db: %f", _state.audio_config.playback_target_db);
 }
 
 void Device::save_state() {
     nvs_handle_t handle;
     ESP_ERROR_CHECK(nvs_open("storage", NVS_READWRITE, &handle));
 
-    ESP_ERROR_CHECK(nvs_set_i8(handle, "enabled", int8_t(_state.enabled)));
+    ESP_ERROR_CHECK(nvs_set_i1(handle, "enabled", _state.enabled));
+    ESP_ERROR_CHECK(nvs_set_f32(handle, "volume", _state.volume));
 
-    auto raw_volume = *(uint32_t*)&_state.volume;
-    ESP_ERROR_CHECK(nvs_set_u32(handle, "volume", raw_volume));
+    ESP_ERROR_CHECK(nvs_set_f32(handle, "play_vol_low", _state.audio_config.volume_scale_low));
+    ESP_ERROR_CHECK(nvs_set_f32(handle, "play_vol_high", _state.audio_config.volume_scale_high));
+    ESP_ERROR_CHECK(nvs_set_i1(handle, "en_audio_proc", _state.audio_config.enable_audio_processing));
+    ESP_ERROR_CHECK(nvs_set_u32(handle, "audio_buf_ms", _state.audio_config.audio_buffer_ms));
+    ESP_ERROR_CHECK(nvs_set_u8(handle, "mic_gain_bits", _state.audio_config.microphone_gain_bits));
+    ESP_ERROR_CHECK(nvs_set_i1(handle, "rec_autovol_en", _state.audio_config.recording_auto_volume_enabled));
+    ESP_ERROR_CHECK(nvs_set_f32(handle, "rec_smooth_fac", _state.audio_config.recording_smoothing_factor));
+    ESP_ERROR_CHECK(nvs_set_i1(handle, "play_autovol_en", _state.audio_config.playback_auto_volume_enabled));
+    ESP_ERROR_CHECK(nvs_set_f32(handle, "play_target_db", _state.audio_config.playback_target_db));
 
     nvs_close(handle);
 }

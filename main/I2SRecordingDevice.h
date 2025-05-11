@@ -2,6 +2,7 @@
 
 #include <atomic>
 
+#include "AudioConfiguration.h"
 #include "Callback.h"
 #include "Mutex.h"
 #include "RingBuffer.h"
@@ -26,6 +27,15 @@ class I2SRecordingDevice {
     Callback<Span<uint8_t>> _data_available;
     RingBuffer _feed_buffer;
     int64_t _feed_buffer_end_time{};
+    int16_t *_work_buffer;
+    size_t _work_buffer_len;
+    int16_t *_reference_buffer;
+    void *_read_buffer;
+    size_t _read_buffer_len;
+    uint8_t _microphone_gain_bits;
+    bool _auto_volume_enabled;
+    float _smoothing_factor;
+    bool _enable_audio_processing;
 #ifdef CONFIG_DEVICE_DUMP_AFE_INPUT
     sockaddr_in _dump_target;
 #endif
@@ -33,7 +43,7 @@ class I2SRecordingDevice {
 public:
     I2SRecordingDevice(UDPServer &udp_server);
 
-    void begin();
+    void begin(const AudioConfiguration &audio_config);
     void on_recording_changed(function<void(bool)> func) { _recording_changed.add(func); }
     bool is_recording() { return _recording; }
     bool start();
@@ -47,5 +57,5 @@ private:
     void forward_task();
     void begin_i2s();
     void begin_afe();
-    static int16_t scale_sample(int32_t sample, float &smoothed_peak);
+    int32_t scale_sample(int32_t sample, float &smoothed_peak);
 };

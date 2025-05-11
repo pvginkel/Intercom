@@ -14,7 +14,7 @@ LOG_TAG(main);
 #endif
 
 [[maybe_unused]] static void show_task_statistics() {
-    xTaskCreatePinnedToCore(
+    FREERTOS_CHECK(xTaskCreatePinnedToCore(
         [](void *param) {
             static auto task_buffer = (char *)malloc(2000);
 
@@ -27,7 +27,7 @@ LOG_TAG(main);
                 vTaskDelay(pdMS_TO_TICKS(5000));
             }
         },
-        "top", CONFIG_ESP_MAIN_TASK_STACK_SIZE, nullptr, 5, nullptr, 0);
+        "top", CONFIG_ESP_MAIN_TASK_STACK_SIZE, nullptr, 5, nullptr, 0));
 }
 
 #endif

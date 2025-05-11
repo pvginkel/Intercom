@@ -20,6 +20,7 @@ using namespace std;
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
+#include "nvs_flash.h"
 #include "sdkconfig.h"
 #include "secrets.h"
 #include "strformat.h"
@@ -29,10 +30,7 @@ using namespace std;
 
 #define CONFIG_DEVICE_I2S_DATA_BIT_WIDTH CONCAT3(I2S_DATA_BIT_WIDTH_, CONFIG_DEVICE_I2S_BITS_PER_SAMPLE, BIT)
 
-#define CONFIG_DEVICE_AUDIO_BUFFER_LEN \
-    (CONFIG_DEVICE_I2S_BITS_PER_SAMPLE / 8 * CONFIG_DEVICE_I2S_SAMPLE_RATE * CONFIG_DEVICE_AUDIO_BUFFER_MS / 1000)
-#define CONFIG_DEVICE_AUDIO_CHUNK_LEN \
-    (CONFIG_DEVICE_I2S_BITS_PER_SAMPLE / 8 * CONFIG_DEVICE_I2S_SAMPLE_RATE * CONFIG_DEVICE_AUDIO_CHUNK_MS / 1000)
+#define AUDIO_BUFFER_LEN(ms) (CONFIG_DEVICE_I2S_BITS_PER_SAMPLE / 8 * CONFIG_DEVICE_I2S_SAMPLE_RATE * ms / 1000)
 
 #if (CONFIG_DEVICE_I2S_SAMPLE_RATE != 16000)
 #error Sample rate must be 16000 Hz
@@ -75,6 +73,18 @@ int getisoweek(tm& time_info);
     } while (0)
 #endif
 
+#define FREERTOS_CHECK(x)                                                                                            \
+    do {                                                                                                             \
+        const auto __FreeRTOS_result = (x);                                                                          \
+        if (__FreeRTOS_result != pdPASS) {                                                                           \
+            printf("FREERTOS_CHECK failed");                                                                         \
+            printf(" at %p\n", __builtin_return_address(0));                                                         \
+            printf("file: \"%s\" line %d\nfunc: %s\nexpression: %s\nerror: %d\n", __FILE__, __LINE__, __ASSERT_FUNC, \
+                   #x, (int)__FreeRTOS_result);                                                                      \
+            abort();                                                                                                 \
+        }                                                                                                            \
+    } while (0)
+
 #define ESP_TIMER_MS(v) ((v) * 1000)
 #define ESP_TIMER_SECONDS(v) ESP_TIMER_MS((v) * 1000)
 
@@ -116,3 +126,9 @@ esp_err_t esp_http_download_string(const esp_http_client_config_t& config, strin
 esp_err_t esp_http_upload_string(const esp_http_client_config_t& config, const char* const data);
 char const* esp_reset_reason_to_name(esp_reset_reason_t reason);
 esp_err_t parse_endpoint(sockaddr_in* addr, const char* input);
+
+esp_err_t nvs_get_i1(nvs_handle_t c_handle, const char* key, bool* out_value);
+esp_err_t nvs_set_i1(nvs_handle_t handle, const char* key, bool value);
+
+esp_err_t nvs_get_f32(nvs_handle_t c_handle, const char* key, float* out_value);
+esp_err_t nvs_set_f32(nvs_handle_t handle, const char* key, float value);

@@ -4,7 +4,15 @@
 
 LOG_TAG(I2SPlaybackDevice);
 
-void I2SPlaybackDevice::begin() {
+void I2SPlaybackDevice::begin(const AudioConfiguration &audio_config) {
+    _volume_scale_low = audio_config.volume_scale_low;
+    _volume_scale_high = audio_config.volume_scale_high;
+    _auto_volume_enabled = audio_config.playback_auto_volume_enabled;
+
+    _buffer.initialize(audio_config.audio_buffer_ms);
+
+    _auto_volume.set_target_db(audio_config.playback_target_db);
+
     i2s_chan_config_t chan_config = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
     ESP_ERROR_CHECK(i2s_new_channel(&chan_config, &_chan, NULL));
 
@@ -27,10 +35,18 @@ void I2SPlaybackDevice::begin() {
             },
     };
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(_chan, &tx_std_cfg));
+
+    _write_buffer_len = AUDIO_BUFFER_LEN(CONFIG_DEVICE_AUDIO_CHUNK_MS);
+    _write_buffer = (uint8_t *)heap_caps_malloc(_write_buffer_len, MALLOC_CAP_INTERNAL);
+    ESP_ERROR_ASSERT(_write_buffer);
 }
 
 void I2SPlaybackDevice::set_volume(float volume) {
-    _auto_volume.set_offset_db(volume);
+    volume = clamp(volume, 0.0f, 1.0f);
+
+    const auto scaled_volume = _volume_scale_low + (_volume_scale_high - _volume_scale_low) * volume;
+
+    _auto_volume.set_offset_db(scaled_volume);
 
     _volume_changed.call(volume);
 }
@@ -51,13 +67,13 @@ bool I2SPlaybackDevice::start() {
 
             _buffer.reset();
 
-            xTaskCreatePinnedToCore(
+            FREERTOS_CHECK(xTaskCreatePinnedToCore(
                 [](void *param) {
                     ((I2SPlaybackDevice *)param)->write_task();
 
                     vTaskDelete(nullptr);
                 },
-                "write_task", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr, 0);
+                "write_task", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr, 0));
         }
     }
 
@@ -100,10 +116,6 @@ void I2SPlaybackDevice::add_samples(sockaddr_in *source_addr, uint8_t *buffer, s
 void I2SPlaybackDevice::write_task() {
     auto task_guard = _task_lock.take();
 
-    const auto buffer_len = CONFIG_DEVICE_AUDIO_CHUNK_LEN;
-    const auto buffer = (uint8_t *)heap_caps_malloc(buffer_len, MALLOC_CAP_INTERNAL);
-    ESP_ERROR_ASSERT(buffer);
-
     // Wait a little bit to give the buffer some time to collect data.
 
     vTaskDelay(pdMS_TO_TICKS(10));
@@ -112,15 +124,15 @@ void I2SPlaybackDevice::write_task() {
 
     int32_t preloaded_samples = 0;
 
-    memset(buffer, 0, buffer_len);
+    memset(_write_buffer, 0, _write_buffer_len);
 
     while (true) {
         size_t written;
-        ESP_ERROR_CHECK(i2s_channel_preload_data(_chan, buffer, buffer_len, &written));
+        ESP_ERROR_CHECK(i2s_channel_preload_data(_chan, _write_buffer, _write_buffer_len, &written));
 
         preloaded_samples += written / sizeof(int16_t);
 
-        if (written < buffer_len) {
+        if (written < _write_buffer_len) {
             break;
         }
     }
@@ -142,7 +154,7 @@ void I2SPlaybackDevice::write_task() {
 
             has_data = _buffer.has_data();
             if (has_data) {
-                _buffer.take(buffer, buffer_len);
+                _buffer.take(_write_buffer, _write_buffer_len);
             }
         }
 
@@ -153,12 +165,14 @@ void I2SPlaybackDevice::write_task() {
             break;
         }
 
-        _auto_volume.process_block((int16_t *)buffer, buffer_len / sizeof(int16_t));
+        if (_auto_volume_enabled) {
+            _auto_volume.process_block((int16_t *)_write_buffer, _write_buffer_len / sizeof(int16_t));
+        }
 
-        _recording_device.feed_reference_samples(playback_time, buffer, buffer_len);
-        playback_time += SAMPLES_TO_US(buffer_len / sizeof(int16_t));
+        _recording_device.feed_reference_samples(playback_time, _write_buffer, _write_buffer_len);
+        playback_time += SAMPLES_TO_US(_write_buffer_len / sizeof(int16_t));
 
-        ESP_ERROR_CHECK(i2s_channel_write(_chan, buffer, buffer_len, nullptr, portMAX_DELAY));
+        ESP_ERROR_CHECK(i2s_channel_write(_chan, _write_buffer, _write_buffer_len, nullptr, portMAX_DELAY));
     }
 
     ESP_LOGI(TAG, "Exiting write task");
@@ -166,6 +180,4 @@ void I2SPlaybackDevice::write_task() {
     _recording_device.reset_feed_buffer();
 
     ESP_ERROR_CHECK(i2s_channel_disable(_chan));
-
-    free(buffer);
 }

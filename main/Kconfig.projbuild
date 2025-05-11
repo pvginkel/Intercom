@@ -2,10 +2,6 @@ menu "Device Configuration"
 
     orsource "$IDF_PATH/examples/common_components/env_caps/$IDF_TARGET/Kconfig.env_caps"
 
-    config DEVICE_MICROPHONE_GAIN_BITS
-        int "Gain to apply to raw samples in bits (i.e. ^2)"
-        default 0
-
     config DEVICE_CONFIG_ENDPOINT
         string "Device config endpoint (%s becomes MAC address)"
 
@@ -64,10 +60,6 @@ menu "Device Configuration"
     config DEVICE_I2S_BITS_PER_SAMPLE
         int "I2S bits per sample"
         default 16
-
-    config DEVICE_AUDIO_BUFFER_MS
-        int "Audio buffer size in ms"
-        default 100
 
     config DEVICE_AUDIO_CHUNK_MS
         int "Audio chunk size in ms"

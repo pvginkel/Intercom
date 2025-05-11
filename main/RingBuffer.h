@@ -7,9 +7,10 @@ class RingBuffer {
     size_t _buffer_available{};
 
 public:
-    RingBuffer(size_t buffer_len);
+    RingBuffer() {}
     ~RingBuffer();
 
+    void initialize(size_t buffer_len);
     void reset();
     void write(void* buffer, size_t buffer_len);
     size_t read(void* buffer, size_t buffer_len);

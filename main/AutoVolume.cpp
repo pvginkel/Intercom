@@ -21,7 +21,7 @@ AutoVolume::AutoVolume() : _limiter_linear(pow(10.0f, LIMITER_DB / 20.0f)) {
     reset();
 
 #if MONITOR_AUTO_VOLUME
-    xTaskCreate(
+    FREERTOS_CHECK(xTaskCreate(
         [](void *param) {
             while (true) {
                 const auto self = (AutoVolume *)param;
@@ -32,7 +32,7 @@ AutoVolume::AutoVolume() : _limiter_linear(pow(10.0f, LIMITER_DB / 20.0f)) {
                 vTaskDelay(pdMS_TO_TICKS(500));
             }
         },
-        "auto_volume_monitor", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr);
+        "auto_volume_monitor", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr));
 #endif
 }
 
@@ -66,7 +66,7 @@ void AutoVolume::process_block(int16_t *buffer, size_t samples) {
 
     /*---------------- 3. Desired attenuation (soft knee) ---------*/
     const float env_db = 20.0f * log10f(_envelope + numeric_limits<float>::min());  // denormal-safe
-    const float diff_db = env_db - TARGET_DB;                                       // + = loud
+    const float diff_db = env_db - _target_db;                                      // + = loud
     float err_db = 0.0f;                                                            // ≤ 0
 
     if (diff_db > 0.0f) {  // only attenuate

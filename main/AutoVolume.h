@@ -13,8 +13,6 @@ class AutoVolume {
     // Delay applied to audio so gain precedes peaks (ms)
     static constexpr float LOOKAHEAD_MS = 2.0f;
 
-    // The target Db to adjust to.
-    static constexpr float TARGET_DB = -18.0f;
     // Attack time (ms)  – how fast attenuation ramps down
     static constexpr float ATTACK = MS2S(10.0f);
     // Release time (ms) – how fast it recovers
@@ -42,13 +40,22 @@ public:
     /** In-place processing of a mono block of 32-bit floats in [-1,1]. */
     void process_block(int16_t* buffer, size_t samples);
 
+    float get_target_db() { return _target_db; }
+    void set_target_db(float target_db) {
+        _target_db = target_db;
+        reset();
+    }
     float get_offset_db() { return _offset_db; }
-    void set_offset_db(float offset_db) { _offset_db = offset_db; }
+    void set_offset_db(float offset_db) {
+        _offset_db = offset_db;
+        reset();
+    }
 
 private:
     /* constants */
     const float _limiter_linear;
 
+    float _target_db = -18.0f;
     float _offset_db{};
     // RMS envelope (linear)
     float _envelope = 0.0f;

@@ -16,9 +16,10 @@ class AudioMixer {
     map<tuple<in_addr_t, in_port_t>, WriteOffset> _write_offsets;
 
 public:
-    AudioMixer();
+    AudioMixer() {}
     ~AudioMixer();
 
+    void initialize(uint32_t buffer_len_ms);
     bool has_data();
     void reset();
     void append(sockaddr_in* source_addr, uint8_t* buffer, size_t buffer_len);

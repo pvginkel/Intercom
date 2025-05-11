@@ -10,13 +10,13 @@ void UDPServer::begin() {
     _receive_buffer = malloc(PAYLOAD_LEN);
     ESP_ERROR_ASSERT(_receive_buffer);
 
-    xTaskCreatePinnedToCore(
+    FREERTOS_CHECK(xTaskCreatePinnedToCore(
         [](void *param) {
             ((UDPServer *)param)->receive_loop();
 
             vTaskDelete(nullptr);
         },
-        "udp_server", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr, 0);
+        "udp_server", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr, 0));
 }
 
 void UDPServer::send(const sockaddr *to, socklen_t tolen, void *buffer, size_t buffer_len) {

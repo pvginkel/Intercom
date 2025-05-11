@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "AudioConfiguration.h"
+
 struct DeviceState {
     bool enabled{};
     bool red_led{};
@@ -9,4 +11,5 @@ struct DeviceState {
     bool playing{};
     bool recording{};
     float volume{};
+    AudioConfiguration audio_config{};
 };

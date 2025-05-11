@@ -6,16 +6,16 @@
 
 LOG_TAG(AudioMixer);
 
-AudioMixer::AudioMixer() {
-    _audio_buffer_len = CONFIG_DEVICE_AUDIO_BUFFER_LEN;
+AudioMixer::~AudioMixer() { free(_buffer); }
+
+void AudioMixer::initialize(uint32_t buffer_len_ms) {
+    _audio_buffer_len = AUDIO_BUFFER_LEN(buffer_len_ms);
     _buffer_len = _audio_buffer_len * 2;
-    _buffer = (uint8_t*)malloc(_buffer_len);
+    _buffer = (uint8_t*)heap_caps_malloc(_buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(_buffer);
 
     reset();
 }
-
-AudioMixer::~AudioMixer() { free(_buffer); }
 
 bool AudioMixer::has_data() { return _write_offsets.size() > 0; }
 

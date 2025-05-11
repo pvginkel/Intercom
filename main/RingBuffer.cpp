@@ -2,13 +2,15 @@
 
 #include "RingBuffer.h"
 
-RingBuffer::RingBuffer(size_t buffer_len) {
-    _buffer_len = buffer_len;
-    _buffer = malloc(_buffer_len);
-    ESP_ERROR_ASSERT(_buffer);
-}
+LOG_TAG(RingBuffer);
 
 RingBuffer::~RingBuffer() { free(_buffer); }
+
+void RingBuffer::initialize(size_t buffer_len) {
+    _buffer_len = buffer_len;
+    _buffer = heap_caps_malloc(_buffer_len, MALLOC_CAP_INTERNAL);
+    ESP_ERROR_ASSERT(_buffer);
+}
 
 void RingBuffer::reset() {
     _buffer_offset = 0;

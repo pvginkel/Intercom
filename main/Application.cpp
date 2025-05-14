@@ -9,7 +9,7 @@
 LOG_TAG(Application);
 
 Application::Application()
-    : _network_connection(&_queue, CONFIG_DEVICE_NETWORK_CONNECT_ATTEMPTS),
+    : _network_connection(&_queue),
       _mqtt_connection(&_queue),
       _udp_server(11106),
       _controls(&_queue),

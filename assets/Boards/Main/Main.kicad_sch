@@ -867,6 +867,76 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Custom Symbols:Solder_pad"
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "U"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Value" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" "Custom Footprints:Solder pad 1.6x3.3mm"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "Solder_pad_1_1"
+				(pin power_in line
+					(at 0 0 0)
+					(length 2.54)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Custom Symbols:Waveshare_ESP32-S3-Tiny"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -1591,10 +1661,28 @@
 		)
 	)
 	(junction
+		(at 95.25 73.66)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "0a644f7a-9cf7-474c-9751-4ad6b3a2aeee")
+	)
+	(junction
 		(at 111.76 73.66)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "24948a7c-d8af-4102-a185-f288c0af621e")
+	)
+	(junction
+		(at 95.25 77.47)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "286c9c47-b349-4e1d-a424-19fe3e21ed84")
+	)
+	(junction
+		(at 95.25 80.01)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "2a70532e-debb-488a-a53f-b51d0cc1f98c")
 	)
 	(junction
 		(at 82.55 73.66)
@@ -1609,10 +1697,28 @@
 		(uuid "3f348e82-87ff-4910-bddd-a740403383fa")
 	)
 	(junction
+		(at 95.25 82.55)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "4f1e5459-3e7f-4b54-8343-09242117c55e")
+	)
+	(junction
+		(at 95.25 87.63)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "50833651-b8ed-4c97-a5c9-44666b434bf6")
+	)
+	(junction
 		(at 82.55 60.96)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "81e078f9-2a4c-416b-819d-49fff54e1055")
+	)
+	(junction
+		(at 95.25 85.09)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "a60d095a-cf56-42f1-9a23-7b17a5a0b3e5")
 	)
 	(junction
 		(at 111.76 93.98)
@@ -1705,6 +1811,16 @@
 			(type default)
 		)
 		(uuid "159033f7-a9dc-4ba0-8700-99f7fe299d97")
+	)
+	(wire
+		(pts
+			(xy 95.25 82.55) (xy 95.25 85.09)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "25726f24-3712-43de-9e82-827a228fb9fb")
 	)
 	(wire
 		(pts
@@ -1858,7 +1974,7 @@
 	)
 	(wire
 		(pts
-			(xy 82.55 73.66) (xy 111.76 73.66)
+			(xy 82.55 73.66) (xy 95.25 73.66)
 		)
 		(stroke
 			(width 0)
@@ -1875,6 +1991,16 @@
 			(type default)
 		)
 		(uuid "6a16d107-a3bf-4935-8a43-b09f27bff7f9")
+	)
+	(wire
+		(pts
+			(xy 95.25 77.47) (xy 95.25 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6b8a3882-569f-4471-8f8a-c9f0e4bb585c")
 	)
 	(wire
 		(pts
@@ -2008,6 +2134,16 @@
 	)
 	(wire
 		(pts
+			(xy 95.25 73.66) (xy 111.76 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b4574f1d-61bc-420c-b826-2fd78b230b1b")
+	)
+	(wire
+		(pts
 			(xy 86.36 132.08) (xy 154.94 132.08)
 		)
 		(stroke
@@ -2025,6 +2161,16 @@
 			(type default)
 		)
 		(uuid "bd2c56ff-ca33-4e1d-9b94-288c0f8c9347")
+	)
+	(wire
+		(pts
+			(xy 95.25 85.09) (xy 95.25 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "beca6332-b2c9-423b-922c-d989c3318436")
 	)
 	(wire
 		(pts
@@ -2058,6 +2204,16 @@
 	)
 	(wire
 		(pts
+			(xy 95.25 80.01) (xy 95.25 82.55)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "caa371c7-8b61-471e-853e-6f16cd2ee2c0")
+	)
+	(wire
+		(pts
 			(xy 111.76 73.66) (xy 111.76 58.42)
 		)
 		(stroke
@@ -2075,6 +2231,26 @@
 			(type default)
 		)
 		(uuid "d55ec375-7480-46d4-86ed-f6abf968d48f")
+	)
+	(wire
+		(pts
+			(xy 95.25 87.63) (xy 95.25 90.17)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d66ae13b-2041-4ff1-a20a-be2d0c871dbc")
+	)
+	(wire
+		(pts
+			(xy 95.25 73.66) (xy 95.25 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d77ffbe0-ee7a-4de5-858b-5f7c57773fe1")
 	)
 	(wire
 		(pts
@@ -2301,6 +2477,274 @@
 		)
 	)
 	(symbol
+		(lib_id "Custom Symbols:Solder_pad")
+		(at 95.25 90.17 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "182899b6-6c1f-4039-9ccd-2e7808922831")
+		(property "Reference" "U7"
+			(at 95.25 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "~"
+			(at 99.06 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Custom Footprints:Solder pad 1.6x3.3mm"
+			(at 95.25 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 95.25 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 95.25 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "44903fee-aebc-47e6-bc2d-3b5767cc424d")
+		)
+		(instances
+			(project "Main"
+				(path "/5d161dc1-54ae-4b00-a0d5-234581851ead"
+					(reference "U7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Custom Symbols:Solder_pad")
+		(at 95.25 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "1a06d328-c199-42e5-a3d6-3248c5841d51")
+		(property "Reference" "U3"
+			(at 95.25 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "~"
+			(at 99.06 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Custom Footprints:Solder pad 1.6x3.3mm"
+			(at 95.25 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 95.25 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 95.25 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "85788434-b826-4626-a5af-3732b55a35c5")
+		)
+		(instances
+			(project ""
+				(path "/5d161dc1-54ae-4b00-a0d5-234581851ead"
+					(reference "U3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Custom Symbols:Solder_pad")
+		(at 95.25 87.63 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "35675623-7ad2-43e4-80b8-76502fb53439")
+		(property "Reference" "U6"
+			(at 95.25 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "~"
+			(at 99.06 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Custom Footprints:Solder pad 1.6x3.3mm"
+			(at 95.25 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 95.25 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 95.25 87.63 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "a1b0330b-cc27-4c65-89f2-59ef64b4b765")
+		)
+		(instances
+			(project "Main"
+				(path "/5d161dc1-54ae-4b00-a0d5-234581851ead"
+					(reference "U6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Custom Symbols:Solder_pad")
+		(at 95.25 82.55 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "489a812f-d795-4544-b080-8a1a121164dc")
+		(property "Reference" "U4"
+			(at 95.25 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "~"
+			(at 99.06 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Custom Footprints:Solder pad 1.6x3.3mm"
+			(at 95.25 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 95.25 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 95.25 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "f7a368c6-01f4-4ea6-9ff8-8f1ad5b5a805")
+		)
+		(instances
+			(project "Main"
+				(path "/5d161dc1-54ae-4b00-a0d5-234581851ead"
+					(reference "U4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Custom Symbols:Waveshare_ESP32-S3-Tiny")
 		(at 129.54 116.84 0)
 		(unit 1)
@@ -2432,6 +2876,73 @@
 		)
 	)
 	(symbol
+		(lib_id "Custom Symbols:Solder_pad")
+		(at 95.25 77.47 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "67e3f598-0214-4d74-8585-4b17082bd640")
+		(property "Reference" "U8"
+			(at 95.25 77.47 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "~"
+			(at 99.06 77.47 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Custom Footprints:Solder pad 1.6x3.3mm"
+			(at 95.25 77.47 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 95.25 77.47 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 95.25 77.47 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "6a21776e-8a4f-4822-8dfb-17c29f5f4457")
+		)
+		(instances
+			(project "Main"
+				(path "/5d161dc1-54ae-4b00-a0d5-234581851ead"
+					(reference "U8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Mechanical:MountingHole")
 		(at 21.59 22.86 0)
 		(unit 1)
@@ -2490,6 +3001,73 @@
 			(project ""
 				(path "/5d161dc1-54ae-4b00-a0d5-234581851ead"
 					(reference "H1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Custom Symbols:Solder_pad")
+		(at 95.25 85.09 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "a0cc5bdf-6deb-42a5-a84b-808801fa3140")
+		(property "Reference" "U5"
+			(at 95.25 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "~"
+			(at 99.06 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Custom Footprints:Solder pad 1.6x3.3mm"
+			(at 95.25 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 95.25 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" ""
+			(at 95.25 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "3d8d4a46-6237-464d-87b6-412d831e7df8")
+		)
+		(instances
+			(project "Main"
+				(path "/5d161dc1-54ae-4b00-a0d5-234581851ead"
+					(reference "U5")
 					(unit 1)
 				)
 			)

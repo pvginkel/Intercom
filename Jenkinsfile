@@ -50,10 +50,10 @@ withVault([vaultSecrets: [
                 }
 
                 dir('Intercom') {
-                    sh 'cp build/intercom.bin intercom-ota.bin'
-
-                    sh 'chmod +x scripts/upload.sh'
-                    sh 'scripts/upload.sh ../HelmCharts/assets/kubernetes-signing-key intercom-ota.bin'
+                    container('idf') {
+                        sh 'chmod +x scripts/upload.sh'
+                        sh 'scripts/upload.sh https://iot.ginbov.nl'
+                    }
                 }
             }
         }

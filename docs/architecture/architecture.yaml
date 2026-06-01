@@ -1,0 +1,57 @@
+schemaVersion: "0.1"
+producer: intercom
+
+# Intercom — ESP32 audio intercom firmware (I2S mic + speaker). Signals over MQTT
+# (intercom/client/<id>/...) and streams audio over UDP with the Intercom Server.
+#
+# This repo introduces the FIRMWARE, not the physical device (registered in IoT
+# Support, generated as a device: instance there). Two units today, more planned.
+# Modeled as if already migrated to the esp-mdm platform (per operator).
+#
+# Beyond the universal MDM edges, the firmware consumes the Intercom relay
+# service (svc:intercom, owned by the intercom-server producer) over its fixed
+# MQTT topic contract. The topic namespace is hardcoded in both peers → no
+# boundBy. The peer UDP audio stream rides addresses the server pushes over those
+# topics, so it is covered by this edge rather than a separate surface.
+
+systemSoftware:
+  - id: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+    label: Intercom firmware
+    summary: >-
+      ESP-IDF firmware for an ESP32 audio intercom (I2S microphone and speaker).
+      Uses MQTT for call signalling and a peer UDP stream for audio with the
+      Intercom Server; managed by IoT Support.
+    introduced: 2025-02-15
+    lifecycle: active
+    stereotype: SoftwareProduct
+    sourceRepository: git:pvginkel/Intercom
+    stats:
+      mcu: esp32
+
+relations:
+  - id: rel:intercom-consumes-iotsupport
+    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+    target: svc:iotsupport-api,b7c5b5ba-36eb-47b8-bf7e-5c50fa1a3656
+    type: Association
+  - id: rel:intercom-consumes-pub-sub
+    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+    target: cap:pub-sub-broker
+    type: Association
+  - id: rel:intercom-consumes-iam
+    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+    target: cap:iam
+    type: Association
+
+  # ── Device-specific: the Intercom relay service (intercom-server), spoken over
+  # its fixed MQTT topic contract; hardcoded namespace → no boundBy. ──
+  - id: rel:intercom-consumes-intercom-relay
+    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+    target: svc:intercom,5914e568-7f39-461a-91fe-9981d5275fe1
+    type: Association
+
+  # ── Home Assistant MQTT integration: also publishes HA discovery entities
+  # (enable switch, volume, etc.); topic convention hardcoded → no boundBy. ──
+  - id: rel:intercom-ha-mqtt
+    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+    target: svc:home-assistant-mqtt,23572189-9185-4a6d-a073-2b2820578e11
+    type: Association

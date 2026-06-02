@@ -1,6 +1,6 @@
 dependencies:
   idf: ">=5.3"
-  esp-sr: ">=2.0.0"
+  esp-sr: "==2.4.6"
   esp-network-support:
     path: ../../esp-libs/esp-network-support
   esp-light-algorithms:

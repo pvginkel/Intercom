@@ -51,8 +51,28 @@ dependencies:
       path: C:\Projects\esp-libs\esp-support
       type: local
     version: 0.1.0
+  espressif/cjson:
+    component_hash: e788323270d90738662d66fffa910bfe1fba019bba087f01557e70c40485b469
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.7.19~2
+  espressif/dl_fft:
+    component_hash: ced3cf28cc70452b7859c06f4e5059215167254a2047e34c893d6f501ccd6ea2
+    dependencies:
+    - name: idf
+      require: private
+      version: '>=5.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 0.4.0
   espressif/esp-dsp:
-    component_hash: 3e7bbd487f1357a1d4944d0c85966d049501ea281b8a4c7f93f7cfedd5b7f23d
+    component_hash: 12e44db246517a627bc0fe2b255b8335410c0215c98bfba2df5a8e3edea839ef
     dependencies:
     - name: idf
       require: private
@@ -60,21 +80,29 @@ dependencies:
     source:
       registry_url: https://components.espressif.com
       type: service
-    version: 1.4.12
+    version: 1.8.0
   espressif/esp-sr:
-    component_hash: b75f73cc0477767f155e06a0c482652bd28890aa53dc4f3828f47b7e332bf886
+    component_hash: aa58d6a13a49600314a50a27240ccbd17e407f608216a3086d4868e0da2e8053
     dependencies:
+    - name: espressif/cjson
+      registry_url: https://components.espressif.com
+      require: private
+      version: ^1.7.19
+    - name: espressif/dl_fft
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=0.2.0'
     - name: espressif/esp-dsp
       registry_url: https://components.espressif.com
       require: private
-      version: <=1.5.0
+      version: 1.8.0
     - name: idf
       require: private
       version: '>=5.0'
     source:
       registry_url: https://components.espressif.com/
       type: service
-    version: 2.0.3
+    version: 2.4.6
   idf:
     source:
       type: idf
@@ -87,6 +115,6 @@ direct_dependencies:
 - esp-support
 - espressif/esp-sr
 - idf
-manifest_hash: cf79768cefaaa5229fbcb560a14380a0b3fad376d4de6dd45acf4a519f10bf79
+manifest_hash: 0849b21c3dd0ea570bcca3a971ba2cafa9101ce5b2bd0392010fc422042084e2
 target: esp32s3
 version: 2.0.0

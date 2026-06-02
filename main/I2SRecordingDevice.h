@@ -17,7 +17,7 @@ class I2SRecordingDevice {
     UDPServer &_udp_server;
     i2s_chan_handle_t _chan;
     srmodel_list_t *_models;
-    esp_afe_sr_iface_t *_afe_handle;
+    const esp_afe_sr_iface_t *_afe_handle;
     esp_afe_sr_data_t *_afe_data;
     atomic<bool> _recording{};
     Callback<bool> _recording_changed;

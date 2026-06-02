@@ -1,36 +1,27 @@
 #pragma once
 
+#include "ApplicationBase.h"
 #include "Controls.h"
 #include "Device.h"
-#include "DeviceConfiguration.h"
-#include "LogManager.h"
-#include "MQTTConnection.h"
-#include "NetworkConnection.h"
-#include "OTAManager.h"
-#include "Queue.h"
 #include "UDPServer.h"
 
-class Application {
-    NetworkConnection _network_connection;
-    MQTTConnection _mqtt_connection;
+class Application : public ApplicationBase {
     UDPServer _udp_server;
     Controls _controls;
     Device _device;
-    OTAManager _ota_manager;
-    Queue _queue;
-    DeviceConfiguration _configuration;
-    LogManager _log_manager;
 
 public:
     Application();
 
-    void begin(bool silent);
-    void process();
+protected:
+    void do_begin() override;
+    void do_ready() override;
+    void do_process() override;
+    void do_network_available() override;
 
 private:
-    void setup_flash();
-    void do_begin(bool silent);
-    void begin_network();
-    void begin_network_available();
-    void begin_after_initialization();
+    void state_changed();
+    void register_mqtt_callbacks();
+    bool parse_audio_configuration(const string& json, AudioConfiguration& config);
+    LedAction* parse_led_action(const string& data);
 };

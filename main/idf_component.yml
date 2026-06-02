@@ -5,3 +5,9 @@ dependencies:
     path: ../../esp-libs/esp-network-support
   esp-light-algorithms:
     path: ../../esp-libs/esp-light-algorithms
+  esp-mqtt-support:
+    path: ../../esp-libs/esp-mqtt-support
+  esp-support:
+    path: ../../esp-libs/esp-support
+  esp-mdm:
+    path: ../../esp-libs/esp-mdm

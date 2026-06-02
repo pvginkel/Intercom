@@ -2,15 +2,17 @@
 
 #include "I2SRecordingDevice.h"
 
+#include <algorithm>
+
 LOG_TAG(I2SRecordingDevice);
 
-I2SRecordingDevice::I2SRecordingDevice(UDPServer &udp_server) : _udp_server(udp_server) {
+I2SRecordingDevice::I2SRecordingDevice(UDPServer& udp_server) : _udp_server(udp_server) {
 #ifdef CONFIG_DEVICE_DUMP_AFE_INPUT
     parse_endpoint(&_dump_target, CONFIG_DEVICE_DUMP_AFE_INPUT_TARGET);
 #endif
 }
 
-void I2SRecordingDevice::begin(const AudioConfiguration &audio_config) {
+void I2SRecordingDevice::begin(const AudioConfiguration& audio_config) {
     _enable_audio_processing = audio_config.enable_audio_processing;
     _microphone_gain_bits = audio_config.microphone_gain_bits;
     _auto_volume_enabled = audio_config.recording_auto_volume_enabled;
@@ -25,9 +27,9 @@ void I2SRecordingDevice::begin(const AudioConfiguration &audio_config) {
     const auto feed_nch = _afe_handle->get_feed_channel_num(_afe_data);
     assert(feed_nch == 2);
     _work_buffer_len = feed_chunksize * feed_nch * sizeof(int16_t);
-    _work_buffer = (int16_t *)heap_caps_malloc(_work_buffer_len, MALLOC_CAP_INTERNAL);
+    _work_buffer = (int16_t*)heap_caps_malloc(_work_buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(_work_buffer);
-    _reference_buffer = (int16_t *)heap_caps_malloc(_work_buffer_len, MALLOC_CAP_INTERNAL);
+    _reference_buffer = (int16_t*)heap_caps_malloc(_work_buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(_reference_buffer);
 
     // We keep the sample buffer equal to the feed buffer to keep latency down.
@@ -36,8 +38,8 @@ void I2SRecordingDevice::begin(const AudioConfiguration &audio_config) {
     ESP_ERROR_ASSERT(_read_buffer);
 
     FREERTOS_CHECK(xTaskCreatePinnedToCore(
-        [](void *param) {
-            ((I2SRecordingDevice *)param)->forward_task();
+        [](void* param) {
+            ((I2SRecordingDevice*)param)->forward_task();
 
             vTaskDelete(nullptr);
         },
@@ -185,7 +187,7 @@ void I2SRecordingDevice::begin_afe() {
     afe_config_free(afe_config);
 }
 
-int32_t I2SRecordingDevice::scale_sample(int32_t sample, float &smoothed_peak) {
+int32_t I2SRecordingDevice::scale_sample(int32_t sample, float& smoothed_peak) {
     // This logic implements a smoothing algorithm to dynamically
     // scale the raw samples to 16 bits.
 
@@ -230,8 +232,8 @@ bool I2SRecordingDevice::start() {
             const int AFE_TASK_SIZE = 8192;
 
             FREERTOS_CHECK(xTaskCreatePinnedToCore(
-                [](void *param) {
-                    ((I2SRecordingDevice *)param)->read_task();
+                [](void* param) {
+                    ((I2SRecordingDevice*)param)->read_task();
 
                     vTaskDelete(nullptr);
                 },
@@ -276,7 +278,7 @@ void I2SRecordingDevice::reset_feed_buffer() {
     _feed_buffer.reset();
 }
 
-void I2SRecordingDevice::feed_reference_samples(int64_t time, uint8_t *buffer, size_t len) {
+void I2SRecordingDevice::feed_reference_samples(int64_t time, uint8_t* buffer, size_t len) {
     auto guard = _lock.take();
 
     _feed_buffer.write(buffer, len);
@@ -338,7 +340,7 @@ void I2SRecordingDevice::read_task() {
 
         const auto reference_samples = reference_read / sizeof(int16_t);
 
-        auto source = (int32_t *)_read_buffer;
+        auto source = (int32_t*)_read_buffer;
 
         for (int i = 0; i < samples; i++) {
             // The INMP441 writes bits 1 through 24. To align this with a 32 bit value,
@@ -367,13 +369,13 @@ void I2SRecordingDevice::read_task() {
                 if (_enable_audio_processing) {
                     _afe_handle->feed(_afe_data, _work_buffer);
                 } else {
-                    _data_available.call({(uint8_t *)_work_buffer, _work_buffer_len});
+                    _data_available.call({(uint8_t*)_work_buffer, _work_buffer_len});
                 }
 
                 work_buffer_offset = 0;
 
 #ifdef CONFIG_DEVICE_DUMP_AFE_INPUT
-                _udp_server.send((sockaddr *)&_dump_target, sizeof(_dump_target), feed_buffer, feed_buffer_len);
+                _udp_server.send((sockaddr*)&_dump_target, sizeof(_dump_target), feed_buffer, feed_buffer_len);
 #endif
             }
         }
@@ -390,6 +392,6 @@ void I2SRecordingDevice::forward_task() {
         ESP_ERROR_ASSERT(res);
         ESP_ERROR_CHECK(res->ret_value);
 
-        _data_available.call({(uint8_t *)res->data, (size_t)res->data_size});
+        _data_available.call({(uint8_t*)res->data, (size_t)res->data_size});
     }
 }

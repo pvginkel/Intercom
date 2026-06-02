@@ -1,17 +1,20 @@
 {
   "folders": [
     {
-      "path": "."
+      "path": ".",
     },
     {
-      "path": "../esp-libs/esp-support"
+      "path": "../esp-libs/esp-support",
     },
     {
-      "path": "../esp-libs/esp-network-support"
+      "path": "../esp-libs/esp-network-support",
     },
     {
-      "path": "../esp-libs/esp-light-algorithms"
-    }
+      "path": "../esp-libs/esp-light-algorithms",
+    },
+    {
+      "path": "../esp-libs/esp-mqtt-support",
+    },
   ],
   "settings": {
     "files.associations": {
@@ -114,7 +117,7 @@
       "stdfloat": "cpp",
       "syncstream": "cpp",
       "typeindex": "cpp",
-      "valarray": "cpp"
-    }
-  }
+      "valarray": "cpp",
+    },
+  },
 }

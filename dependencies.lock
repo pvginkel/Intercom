@@ -9,6 +9,30 @@ dependencies:
       path: C:\Projects\esp-libs\esp-light-algorithms
       type: local
     version: 0.1.0
+  esp-mdm:
+    dependencies:
+    - name: idf
+      version: '>=5.3'
+    - name: esp-mqtt-support
+      path: ../esp-mqtt-support
+    - name: esp-network-support
+      path: ../esp-network-support
+    - name: esp-support
+      path: ../esp-support
+    source:
+      path: C:\Projects\esp-libs\esp-mdm
+      type: local
+    version: 0.1.0
+  esp-mqtt-support:
+    dependencies:
+    - name: idf
+      version: '>=5.3'
+    - name: esp-support
+      path: ../esp-support
+    source:
+      path: C:\Projects\esp-libs\esp-mqtt-support
+      type: local
+    version: 0.1.0
   esp-network-support:
     dependencies:
     - name: idf
@@ -54,12 +78,15 @@ dependencies:
   idf:
     source:
       type: idf
-    version: 5.3.2
+    version: 5.5.3
 direct_dependencies:
 - esp-light-algorithms
+- esp-mdm
+- esp-mqtt-support
 - esp-network-support
+- esp-support
 - espressif/esp-sr
 - idf
-manifest_hash: febd6993da14a8ef36cd15fb27b82381b3ddb873fda78ee8fda80fb726d1d59b
+manifest_hash: cf79768cefaaa5229fbcb560a14380a0b3fad376d4de6dd45acf4a519f10bf79
 target: esp32s3
 version: 2.0.0

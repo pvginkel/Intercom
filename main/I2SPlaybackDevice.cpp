@@ -2,9 +2,11 @@
 
 #include "I2SPlaybackDevice.h"
 
+#include <algorithm>
+
 LOG_TAG(I2SPlaybackDevice);
 
-void I2SPlaybackDevice::begin(const AudioConfiguration &audio_config) {
+void I2SPlaybackDevice::begin(const AudioConfiguration& audio_config) {
     _volume_scale_low = audio_config.volume_scale_low;
     _volume_scale_high = audio_config.volume_scale_high;
     _auto_volume_enabled = audio_config.playback_auto_volume_enabled;
@@ -37,7 +39,7 @@ void I2SPlaybackDevice::begin(const AudioConfiguration &audio_config) {
     ESP_ERROR_CHECK(i2s_channel_init_std_mode(_chan, &tx_std_cfg));
 
     _write_buffer_len = AUDIO_BUFFER_LEN(CONFIG_DEVICE_AUDIO_CHUNK_MS);
-    _write_buffer = (uint8_t *)heap_caps_malloc(_write_buffer_len, MALLOC_CAP_INTERNAL);
+    _write_buffer = (uint8_t*)heap_caps_malloc(_write_buffer_len, MALLOC_CAP_INTERNAL);
     ESP_ERROR_ASSERT(_write_buffer);
 }
 
@@ -68,8 +70,8 @@ bool I2SPlaybackDevice::start() {
             _buffer.reset();
 
             FREERTOS_CHECK(xTaskCreatePinnedToCore(
-                [](void *param) {
-                    ((I2SPlaybackDevice *)param)->write_task();
+                [](void* param) {
+                    ((I2SPlaybackDevice*)param)->write_task();
 
                     vTaskDelete(nullptr);
                 },
@@ -107,7 +109,7 @@ bool I2SPlaybackDevice::stop() {
     return result;
 }
 
-void I2SPlaybackDevice::add_samples(sockaddr_in *source_addr, uint8_t *buffer, size_t buffer_len) {
+void I2SPlaybackDevice::add_samples(sockaddr_in* source_addr, uint8_t* buffer, size_t buffer_len) {
     auto guard = _lock.take();
 
     _buffer.append(source_addr, buffer, buffer_len);
@@ -166,7 +168,7 @@ void I2SPlaybackDevice::write_task() {
         }
 
         if (_auto_volume_enabled) {
-            _auto_volume.process_block((int16_t *)_write_buffer, _write_buffer_len / sizeof(int16_t));
+            _auto_volume.process_block((int16_t*)_write_buffer, _write_buffer_len / sizeof(int16_t));
         }
 
         _recording_device.feed_reference_samples(playback_time, _write_buffer, _write_buffer_len);

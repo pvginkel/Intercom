@@ -11,6 +11,15 @@ execute_process(
 
 set(PROJECT_VER "${GIT_COMMIT_HASH}")
 
+set(
+    SDKCONFIG_DEFAULTS
+    ../esp-libs/esp-mdm/sdkconfig.defaults
+    ../esp-libs/esp-network-support/sdkconfig.defaults
+    ../esp-libs/esp-mqtt-support/sdkconfig.defaults
+    ../esp-libs/esp-light-algorithms/sdkconfig.defaults
+    sdkconfig.defaults
+)
+
 message(STATUS "Firmware version set to: ${PROJECT_VER}")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)

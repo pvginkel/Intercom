@@ -195,11 +195,7 @@ cJSON* Device::get_state() {
 
 void Device::load_state() {
     nvs_handle_t handle;
-    auto err = nvs_open("storage", NVS_READONLY, &handle);
-    if (err == ESP_ERR_NVS_NOT_FOUND) {
-        return;
-    }
-    ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(nvs_open("storage", NVS_READWRITE, &handle));
 
     _state.enabled = nvs_enabled.get(handle, true);
     _state.volume = nvs_volume.get(handle, 0.6);

@@ -17,33 +17,26 @@ withVault([vaultSecrets: [
         ])
     ]) {
         node(POD_LABEL) {
-            stage('Build paper clock') {
+            stage('Cloning repo') {
+                dir('Intercom') {
+                    checkout scm
+                }
+
                 dir('esp-libs') {
                     git branch: 'main',
                         credentialsId: '5f6fbd66-b41c-405f-b107-85ba6fd97f10',
                         url: 'https://github.com/pvginkel/esp-libs.git'
                 }
+            }
 
+            stage('Build paper clock') {
                 dir('Intercom') {
-                    git branch: 'main',
-                        credentialsId: '5f6fbd66-b41c-405f-b107-85ba6fd97f10',
-                        url: 'https://github.com/pvginkel/Intercom.git'
-                        
                     container('idf') {
                         // Necessary because the IDF container doesn't have support
                         // for setting the uid/gid.
                         sh 'git config --global --add safe.directory \'*\''
-                        
-                        // The Docker build isn't resolving the libraries from the
-                        // relative folder. Not sure why. Instead it expects the
-                        // components to be in the components folder.
-                        sh 'mkdir -p components'
-                        sh 'cp -a ../esp-libs/esp-support components'
-                        sh 'cp -a ../esp-libs/esp-network-support components'
-                        sh 'cp -a ../esp-libs/esp-light-algorithms components'
 
-                        sh 'chmod +x scripts/dockerbuild.sh'
-                        sh '/opt/esp/entrypoint.sh scripts/dockerbuild.sh'
+                        sh '/opt/esp/entrypoint.sh idf.py build'
                     }
                 }
             }

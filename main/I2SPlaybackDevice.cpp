@@ -24,9 +24,9 @@ void I2SPlaybackDevice::begin(const AudioConfiguration& audio_config) {
         .gpio_cfg =
             {
                 .mclk = I2S_GPIO_UNUSED,
-                .bclk = (gpio_num_t)CONFIG_DEVICE_SPEAKER_SCK_PIN,
-                .ws = (gpio_num_t)CONFIG_DEVICE_SPEAKER_WS_PIN,
-                .dout = (gpio_num_t)CONFIG_DEVICE_SPEAKER_DATA_PIN,
+                .bclk = (gpio_num_t)BOARD_SPEAKER_SCK_PIN,
+                .ws = (gpio_num_t)BOARD_SPEAKER_WS_PIN,
+                .dout = (gpio_num_t)BOARD_SPEAKER_DATA_PIN,
                 .din = I2S_GPIO_UNUSED,
                 .invert_flags =
                     {

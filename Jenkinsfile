@@ -25,23 +25,25 @@ withVault([vaultSecrets: [
                 }
             }
 
-            stage('Build paper clock') {
-                dir('Intercom') {
-                    container('idf') {
-                        // Necessary because the IDF container doesn't have support
-                        // for setting the uid/gid.
-                        sh 'git config --global --add safe.directory \'*\''
+            for (hardwareVersion in [1, 2]) {
+                stage("Build intercom v${hardwareVersion}") {
+                    dir('Intercom') {
+                        container('idf') {
+                            // Necessary because the IDF container doesn't have support
+                            // for setting the uid/gid.
+                            sh 'git config --global --add safe.directory \'*\''
 
-                        sh '/opt/esp/entrypoint.sh idf.py build'
+                            sh "/opt/esp/entrypoint.sh idf.py -DHARDWARE_VERSION=${hardwareVersion} build"
+                        }
                     }
                 }
-            }
-            
-            stage('Deploy intercom') {
-                dir('Intercom') {
-                    container('idf') {
-                        sh 'chmod +x scripts/upload.sh'
-                        sh 'scripts/upload.sh https://iot.ginbov.nl'
+
+                stage("Deploy intercom v${hardwareVersion}") {
+                    dir('Intercom') {
+                        container('idf') {
+                            sh 'chmod +x scripts/upload.sh'
+                            sh 'scripts/upload.sh https://iot.ginbov.nl'
+                        }
                     }
                 }
             }

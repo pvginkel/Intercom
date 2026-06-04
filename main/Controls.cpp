@@ -14,11 +14,11 @@ static float gamma_correct(float level) { return pow(level, 1.0f / GAMMA); }
 void Controls::begin() {
     _led_channel_manager.begin();
 
-    _led_channel_manager.configure_channel(CONFIG_DEVICE_LR_PIN, LR_CHANNEL);
-    _led_channel_manager.configure_channel(CONFIG_DEVICE_LG_PIN, LG_CHANNEL);
+    _led_channel_manager.configure_channel(BOARD_LR_PIN, LR_CHANNEL);
+    _led_channel_manager.configure_channel(BOARD_LG_PIN, LG_CHANNEL);
 
     gpio_config_t btn_config = {
-        .pin_bit_mask = (1ull << CONFIG_DEVICE_PB_PIN),
+        .pin_bit_mask = (1ull << BOARD_PB_PIN),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
     };
@@ -26,7 +26,7 @@ void Controls::begin() {
 
     _button.setInverted();
     _button.interval(50);
-    _button.attach(CONFIG_DEVICE_PB_PIN);
+    _button.attach(BOARD_PB_PIN);
 }
 
 void Controls::update() {

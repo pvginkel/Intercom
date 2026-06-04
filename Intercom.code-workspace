@@ -15,6 +15,9 @@
     {
       "path": "../esp-libs/esp-mqtt-support",
     },
+    {
+      "path": "../esp-libs/esp-mdm",
+    },
   ],
   "settings": {
     "files.associations": {

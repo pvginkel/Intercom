@@ -18,6 +18,7 @@ protected:
     void do_ready() override;
     void do_process() override;
     void do_network_available() override;
+    MQTTDeviceConfiguration get_device_configuration() override;
 
 private:
     void state_changed();

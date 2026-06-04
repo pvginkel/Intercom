@@ -10,6 +10,12 @@ LOG_TAG(Application);
 Application::Application()
     : _udp_server(11106), _controls(&get_queue()), _device(get_mqtt_connection(), _udp_server, _controls) {}
 
+MQTTDeviceConfiguration Application::get_device_configuration() {
+    auto config = ApplicationBase::get_device_configuration();
+    config.model_id = strformat("%s v%d", config.model.c_str(), HARDWARE_VERSION);
+    return config;
+}
+
 void Application::do_begin() {
     _controls.begin();
 

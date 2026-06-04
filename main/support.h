@@ -21,6 +21,7 @@ using namespace std;
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "nvs_flash.h"
+#include "board_config.h"
 #include "sdkconfig.h"
 #include "secrets.h"
 #include "strformat.h"

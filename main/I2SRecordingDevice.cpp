@@ -68,10 +68,10 @@ void I2SRecordingDevice::begin_i2s() {
         .gpio_cfg =
             {
                 .mclk = I2S_GPIO_UNUSED,
-                .bclk = (gpio_num_t)CONFIG_DEVICE_MICROPHONE_SCK_PIN,
-                .ws = (gpio_num_t)CONFIG_DEVICE_MICROPHONE_WS_PIN,
+                .bclk = (gpio_num_t)BOARD_MICROPHONE_SCK_PIN,
+                .ws = (gpio_num_t)BOARD_MICROPHONE_WS_PIN,
                 .dout = I2S_GPIO_UNUSED,
-                .din = (gpio_num_t)CONFIG_DEVICE_MICROPHONE_DATA_PIN,
+                .din = (gpio_num_t)BOARD_MICROPHONE_DATA_PIN,
                 .invert_flags =
                     {
                         .mclk_inv = false,

@@ -11,6 +11,15 @@ execute_process(
 
 set(PROJECT_VER "${GIT_COMMIT_HASH}")
 
+# Hardware version. Build a specific board revision with:
+#   idf.py -DHARDWARE_VERSION=2 build
+# Defaults to the current board when not supplied (e.g. local `idf.py build`).
+if(NOT DEFINED HARDWARE_VERSION)
+    set(HARDWARE_VERSION 2)
+endif()
+message(STATUS "Hardware version set to: ${HARDWARE_VERSION}")
+add_compile_definitions(HARDWARE_VERSION=${HARDWARE_VERSION})
+
 set(
     SDKCONFIG_DEFAULTS
     ../esp-libs/esp-mdm/sdkconfig.defaults
@@ -24,4 +33,4 @@ message(STATUS "Firmware version set to: ${PROJECT_VER}")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-project(intercom)
+project(intercom_v${HARDWARE_VERSION})

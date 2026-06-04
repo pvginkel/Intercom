@@ -1,14 +1,7 @@
 # Application configuration
 
-CONFIG_DEVICE_PB_PIN=13
-CONFIG_DEVICE_LR_PIN=17
-CONFIG_DEVICE_LG_PIN=18
-CONFIG_DEVICE_MICROPHONE_WS_PIN=14
-CONFIG_DEVICE_MICROPHONE_SCK_PIN=16
-CONFIG_DEVICE_MICROPHONE_DATA_PIN=15
-CONFIG_DEVICE_SPEAKER_WS_PIN=3
-CONFIG_DEVICE_SPEAKER_SCK_PIN=2
-CONFIG_DEVICE_SPEAKER_DATA_PIN=1
+# Device pins (push button, LEDs, I2S mic/speaker) are selected per hardware
+# version in main/board_config.h via the HARDWARE_VERSION compile definition.
 
 CONFIG_WIFI_MAX_TX_POWER=44
 
@@ -48,4 +41,5 @@ CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
 CONFIG_MQTT_TOPIC_PREFIX="intercom/client"
 CONFIG_MQTT_DEVICE_MANUFACTURER="Pieter"
 CONFIG_MQTT_DEVICE_MODEL="Intercom"
-CONFIG_MQTT_DEVICE_MODEL_ID="Intercom v2"
+# CONFIG_MQTT_DEVICE_MODEL_ID is set programmatically per hardware version in
+# Application::get_device_configuration() ("Intercom v<HARDWARE_VERSION>").

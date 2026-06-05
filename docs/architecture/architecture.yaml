@@ -100,3 +100,14 @@ relations:
     source: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
     target: svc:home-assistant-mqtt,23572189-9185-4a6d-a073-2b2820578e11
     type: Association
+
+  # Realize the IoT-device capability — the selection axis for the IoT view
+  # (in-house ESP32 firmware, managed by IoTSupport, integrated via MQTT discovery).
+  - id: rel:intercom-v1-realizes-iot-device
+    source: ss:intercom-v1,c943f60c-e495-4355-af9a-bef67c46f0df
+    target: cap:iot-device
+    type: Realization
+  - id: rel:intercom-v2-realizes-iot-device
+    source: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
+    target: cap:iot-device
+    type: Realization

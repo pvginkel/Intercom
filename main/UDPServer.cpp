@@ -2,6 +2,7 @@
 
 #include "UDPServer.h"
 
+#include "esp_timer.h"
 #include "lwip/sockets.h"
 
 LOG_TAG(UDPServer);
@@ -11,20 +12,35 @@ void UDPServer::begin() {
     ESP_ERROR_ASSERT(_receive_buffer);
 
     FREERTOS_CHECK(xTaskCreatePinnedToCore(
-        [](void *param) {
-            ((UDPServer *)param)->receive_loop();
+        [](void* param) {
+            ((UDPServer*)param)->receive_loop();
 
             vTaskDelete(nullptr);
         },
         "udp_server", CONFIG_ESP_MAIN_TASK_STACK_SIZE, this, 5, nullptr, 0));
 }
 
-void UDPServer::send(const sockaddr *to, socklen_t tolen, void *buffer, size_t buffer_len) {
+void UDPServer::send(const sockaddr* to, socklen_t tolen, void* buffer, size_t buffer_len) {
     auto guard = _lock.take();
 
     int err = sendto(_sock, buffer, buffer_len, 0, to, tolen);
     if (err < 0) {
-        ESP_LOGE(TAG, "Failed to send packet: errno %d", errno);
+        const auto send_errno = errno;
+
+        // Rate-limit: with the link down, sendto can fail on every audio packet
+        // (hundreds/sec). Logging each one storms the MQTT-routed logger and the
+        // heap, so coalesce to at most one line per second with an occurrence
+        // count. State is guarded by _lock, held above.
+        constexpr int64_t LOG_INTERVAL_US = 1000000;
+
+        _send_error_count++;
+
+        const auto now = esp_timer_get_time();
+        if (now - _last_send_error_log_us >= LOG_INTERVAL_US) {
+            ESP_LOGE(TAG, "Failed to send packet: errno %d (%d occurrences)", send_errno, _send_error_count);
+            _last_send_error_log_us = now;
+            _send_error_count = 0;
+        }
     }
 }
 
@@ -58,7 +74,7 @@ void UDPServer::run_server() {
     timeval timeout = {.tv_sec = 10};
     setsockopt(_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
-    int err = bind(_sock, (sockaddr *)&dest_addr, sizeof(dest_addr));
+    int err = bind(_sock, (sockaddr*)&dest_addr, sizeof(dest_addr));
     if (err < 0) {
         ESP_LOGE(TAG, "Socket unable to bind; errno %d", errno);
         return;
@@ -70,7 +86,7 @@ void UDPServer::run_server() {
     socklen_t socklen = sizeof(source_addr);
 
     while (true) {
-        int len = recvfrom(_sock, _receive_buffer, PAYLOAD_LEN, 0, (sockaddr *)&source_addr, &socklen);
+        int len = recvfrom(_sock, _receive_buffer, PAYLOAD_LEN, 0, (sockaddr*)&source_addr, &socklen);
         if (len < 0) {
             if (errno == EAGAIN) {
                 continue;
@@ -81,7 +97,7 @@ void UDPServer::run_server() {
         }
 
         _received.call(UDPPacket{
-            .source_addr = (sockaddr_in *)&source_addr,
+            .source_addr = (sockaddr_in*)&source_addr,
             .buffer = _receive_buffer,
             .buffer_len = (size_t)len,
         });

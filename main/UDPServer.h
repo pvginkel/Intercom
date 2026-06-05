@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "Callback.h"
 #include "Mutex.h"
 
@@ -15,6 +17,9 @@ class UDPServer {
     int _port;
     void* _receive_buffer;
     int _sock{-1};
+    // Rate-limit state for the send-error log (guarded by _lock).
+    int _send_error_count{};
+    int64_t _last_send_error_log_us{};
 
 public:
     static constexpr size_t PAYLOAD_LEN = 1472 /* max safe data size assuming an MTU of 1500 */;

@@ -14,6 +14,7 @@ using namespace std;
 
 #include <string>
 
+#include "board_config.h"
 #include "cJSON.h"
 #include "esp_err.h"
 #include "esp_http_client.h"
@@ -21,9 +22,7 @@ using namespace std;
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "nvs_flash.h"
-#include "board_config.h"
 #include "sdkconfig.h"
-#include "secrets.h"
 #include "strformat.h"
 
 #define __CONCAT3(a, b, c) a##b##c

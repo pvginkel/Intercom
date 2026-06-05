@@ -15,43 +15,88 @@ producer: intercom
 # topics, so it is covered by this edge rather than a separate surface.
 
 systemSoftware:
-  - id: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
-    label: Intercom firmware
+  - id: ss:intercom-v1,c943f60c-e495-4355-af9a-bef67c46f0df
+    label: Intercom firmware (v1)
     summary: >-
-      ESP-IDF firmware for an ESP32 audio intercom (I2S microphone and speaker).
-      Uses MQTT for call signalling and a peer UDP stream for audio with the
-      Intercom Server; managed by IoT Support.
+      ESP-IDF firmware for the v1 board revision of an ESP32 audio intercom
+      (I2S microphone and speaker). Uses MQTT for call signalling and a peer UDP
+      stream for audio with the Intercom Server; managed by IoT Support.
     introduced: 2025-02-15
     lifecycle: active
     stereotype: SoftwareProduct
     sourceRepository: git:pvginkel/Intercom
     stats:
       mcu: esp32
+      hardwareVersion: "1"
+
+  - id: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
+    label: Intercom firmware (v2)
+    summary: >-
+      ESP-IDF firmware for the v2 board revision of an ESP32 audio intercom
+      (I2S microphone and speaker). Identical functionality to v1, targeting the
+      new hardware revision. Uses MQTT for call signalling and a peer UDP stream
+      for audio with the Intercom Server; managed by IoT Support.
+    introduced: 2026-06-05
+    lifecycle: active
+    stereotype: SoftwareProduct
+    sourceRepository: git:pvginkel/Intercom
+    stats:
+      mcu: esp32
+      hardwareVersion: "2"
 
 relations:
-  - id: rel:intercom-consumes-iotsupport
-    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+  # ── v1 firmware consumption edges ──
+  - id: rel:intercom-v1-consumes-iotsupport
+    source: ss:intercom-v1,c943f60c-e495-4355-af9a-bef67c46f0df
     target: svc:iotsupport-api,b7c5b5ba-36eb-47b8-bf7e-5c50fa1a3656
     type: Association
-  - id: rel:intercom-consumes-pub-sub
-    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+  - id: rel:intercom-v1-consumes-pub-sub
+    source: ss:intercom-v1,c943f60c-e495-4355-af9a-bef67c46f0df
     target: cap:pub-sub-broker
     type: Association
-  - id: rel:intercom-consumes-iam
-    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+  - id: rel:intercom-v1-consumes-iam
+    source: ss:intercom-v1,c943f60c-e495-4355-af9a-bef67c46f0df
     target: cap:iam
     type: Association
 
   # ── Device-specific: the Intercom relay service (intercom-server), spoken over
   # its fixed MQTT topic contract; hardcoded namespace → no boundBy. ──
-  - id: rel:intercom-consumes-intercom-relay
-    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+  - id: rel:intercom-v1-consumes-intercom-relay
+    source: ss:intercom-v1,c943f60c-e495-4355-af9a-bef67c46f0df
     target: svc:intercom,5914e568-7f39-461a-91fe-9981d5275fe1
     type: Association
 
   # ── Home Assistant MQTT integration: also publishes HA discovery entities
   # (enable switch, volume, etc.); topic convention hardcoded → no boundBy. ──
-  - id: rel:intercom-ha-mqtt
-    source: ss:intercom,c943f60c-e495-4355-af9a-bef67c46f0df
+  - id: rel:intercom-v1-ha-mqtt
+    source: ss:intercom-v1,c943f60c-e495-4355-af9a-bef67c46f0df
+    target: svc:home-assistant-mqtt,23572189-9185-4a6d-a073-2b2820578e11
+    type: Association
+
+  # ── v2 firmware consumption edges (same contracts as v1, new board revision) ──
+  - id: rel:intercom-v2-consumes-iotsupport
+    source: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
+    target: svc:iotsupport-api,b7c5b5ba-36eb-47b8-bf7e-5c50fa1a3656
+    type: Association
+  - id: rel:intercom-v2-consumes-pub-sub
+    source: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
+    target: cap:pub-sub-broker
+    type: Association
+  - id: rel:intercom-v2-consumes-iam
+    source: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
+    target: cap:iam
+    type: Association
+
+  # ── Device-specific: the Intercom relay service (intercom-server), spoken over
+  # its fixed MQTT topic contract; hardcoded namespace → no boundBy. ──
+  - id: rel:intercom-v2-consumes-intercom-relay
+    source: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
+    target: svc:intercom,5914e568-7f39-461a-91fe-9981d5275fe1
+    type: Association
+
+  # ── Home Assistant MQTT integration: also publishes HA discovery entities
+  # (enable switch, volume, etc.); topic convention hardcoded → no boundBy. ──
+  - id: rel:intercom-v2-ha-mqtt
+    source: ss:intercom-v2,bf17d137-676b-464a-ad5a-3460602766e6
     target: svc:home-assistant-mqtt,23572189-9185-4a6d-a073-2b2820578e11
     type: Association

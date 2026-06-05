@@ -19,6 +19,7 @@ protected:
     void do_process() override;
     void do_network_available() override;
     MQTTDeviceConfiguration get_device_configuration() override;
+    int8_t get_wifi_max_tx_power() override;
 
 private:
     void state_changed();

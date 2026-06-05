@@ -26,6 +26,10 @@
 #define BOARD_SPEAKER_SCK_PIN 2
 #define BOARD_SPEAKER_DATA_PIN 1
 
+// Version 1 picks up RF interference from its own WiFi radio, so clamp the
+// transmit power to 44 (~11 dBm). 0 means leave the radio at its default.
+#define BOARD_WIFI_MAX_TX_POWER 44
+
 #elif HARDWARE_VERSION == 2
 
 #define BOARD_PB_PIN 13
@@ -37,6 +41,10 @@
 #define BOARD_SPEAKER_WS_PIN 3
 #define BOARD_SPEAKER_SCK_PIN 2
 #define BOARD_SPEAKER_DATA_PIN 1
+
+// Version 2 reworked the board to avoid the WiFi interference, so the radio
+// runs at full (default) power.
+#define BOARD_WIFI_MAX_TX_POWER 0
 
 #else
 

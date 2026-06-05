@@ -1,9 +1,8 @@
 # Application configuration
 
-# Device pins (push button, LEDs, I2S mic/speaker) are selected per hardware
-# version in main/board_config.h via the HARDWARE_VERSION compile definition.
-
-CONFIG_WIFI_MAX_TX_POWER=44
+# Device pins (push button, LEDs, I2S mic/speaker) and the WiFi max TX power are
+# selected per hardware version in main/board_config.h via the HARDWARE_VERSION
+# compile definition (the latter is applied through Application::get_wifi_max_tx_power()).
 
 CONFIG_MQTT_USE_CORE_0=n
 CONFIG_MQTT_USE_CORE_1=y

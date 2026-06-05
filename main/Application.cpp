@@ -16,6 +16,8 @@ MQTTDeviceConfiguration Application::get_device_configuration() {
     return config;
 }
 
+int8_t Application::get_wifi_max_tx_power() { return BOARD_WIFI_MAX_TX_POWER; }
+
 void Application::do_begin() {
     _controls.begin();
 

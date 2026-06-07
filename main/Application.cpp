@@ -23,11 +23,11 @@ void Application::do_begin() {
 
     _controls.set_red_runner(new LedFadeRunner(0, 0, 500));
 
+    get_mqtt_connection().on_publish_discovery([this]() { register_mqtt_callbacks(); });
+
     get_mqtt_connection().on_connected_changed([this](auto state) {
         if (state.connected) {
             state_changed();
-
-            register_mqtt_callbacks();
         }
     });
 

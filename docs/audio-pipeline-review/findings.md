@@ -5,7 +5,9 @@ Severity legend:
 - **Q (quality)** — audible audio-quality impact, not a dropout.
 - **L (low)** — hygiene, latent bugs, small wins.
 
-File references are to the state of the tree at the time of review.
+File references are to the state of the tree at the time of review (commit `4b77e9c`).
+Paths starting with `esp-libs/` refer to the shared components checked out next to this
+repository (see `main/idf_component.yml`).
 
 ---
 
@@ -93,7 +95,7 @@ sample clocks are PLL-derived and unaffected, and the I2S driver holds an APB lo
 a channel is enabled — but the **CPU** frequency can still drop to 80 MHz between
 audio bursts, and each DFS transition briefly stalls both cores and shifts interrupt
 latency. AEC (`VOIP_HIGH_PERF`) + NS is a heavy load on core 1; a downclocked window at
-the wrong moment shows up as exactly the kind of intermittent glitch you describe.
+the wrong moment shows up as exactly this kind of intermittent glitch.
 
 **Fix (pick one):**
 1. Simplest: remove `CONFIG_PM_ENABLE`/`CONFIG_PM_DFS_INIT_AUTO` from

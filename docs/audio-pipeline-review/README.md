@@ -1,6 +1,11 @@
 # Audio pipeline review
 
 Review of the Intercom firmware's audio processing and streaming, requested 2026-07-12.
+Motivation: streaming generally works, but the device occasionally produces small
+hiccups, and the operator wanted a check for missed code or configuration that would
+improve audio quality. The reviewed tree is commit `4b77e9c`; file/line references in
+the findings refer to that state.
+
 Scope: everything from the INMP441 microphone to the UDP wire and back to the speaker —
 `I2SRecordingDevice`, `I2SPlaybackDevice`, `AudioMixer`, `AutoVolume`, `RingBuffer`,
 `UDPServer`, `Device`/`Application` wiring, `sdkconfig.defaults`, and the WiFi setup in
@@ -22,7 +27,7 @@ this and it is done correctly; the buffers and locking are sound; audio memory i
 correctly pinned to internal RAM; and runtime-tunable audio config over MQTT is a feature
 many commercial devices lack. Nothing here is structurally wrong.
 
-The hiccups you hear are most likely **not** "just what a device like this does." Three
+The reported hiccups are most likely **not** "just what a device like this does." Three
 independent causes stack up, all fixable:
 
 1. **WiFi modem sleep is on** (H1) — the ESP-IDF default. The radio naps between beacons

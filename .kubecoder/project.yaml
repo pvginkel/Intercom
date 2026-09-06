@@ -1,0 +1,31 @@
+projects:
+  root:
+    description: >-
+      ESP32-S3 intercom firmware (ESP-IDF 5.5.3) — I2S mic/speaker, UDP audio streaming
+      and MQTT/Home Assistant discovery. One tree, two hardware revisions.
+
+    # The firmware build pipeline. The repo carries a second Jenkinsfile,
+    # Jenkinsfile.architecture, run by the `AaC/Intercom` job — the architecture-as-code
+    # producer whose validation step is this component's `lint:` below.
+    jenkins: Firmware/Intercom
+
+    # Nothing to set up: ESP-IDF's component manager fetches managed_components/ at
+    # configure time, as part of the build, and there is no other dependency to install.
+
+    # CI builds both hardware revisions in sequence into the same build/ directory
+    # (idf.py -DHARDWARE_VERSION=1 build, then =2), which makes every second build a full
+    # rebuild. Here each revision gets its own build directory instead, so both stay
+    # incremental. Same compiler, same flags, same artifacts — only the output path differs.
+    build:
+      - cexec esp-idf idf.py -B build/v1 -DHARDWARE_VERSION=1 build
+      - cexec esp-idf idf.py -B build/v2 -DHARDWARE_VERSION=2 build
+
+    # test: intentionally unset — this repo has no test suite. The firmware is verified on
+    # hardware; there is no host-side suite to run and none is stubbed out here.
+
+    # The architecture-as-code artifact is the one thing in this repo that has a checker,
+    # and it is the check CI runs (Jenkinsfile.architecture). Note it is a network call:
+    # arch-validate.py POSTs to https://architecture.webathome.org/api/validate, so this
+    # gate needs outbound HTTPS and fails with exit 2 (not 1) if the service is unreachable.
+    # It runs in the dev container, not a sidecar — the script is stdlib-only Python 3.
+    lint: ./scripts/arch-validate.py docs/architecture/*.yaml

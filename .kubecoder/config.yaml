@@ -1,0 +1,43 @@
+# The KubeCoder environment for Intercom: ESP32-S3 intercom firmware, built with ESP-IDF.
+#
+# esp-libs is cloned beside this repo because the build reaches out of the tree for it:
+# the top-level CMakeLists.txt lists ../esp-libs/<component>/sdkconfig.defaults, and
+# main/idf_component.yml declares path dependencies at ../../esp-libs/<component>. That is
+# the layout CI arranges too (the Jenkinsfile clones esp-libs beside the checkout). Without
+# it the build stops at CMake configure with a missing component path. It is reference-only
+# here — nothing in this environment writes to it — hence `shared: true`.
+repos:
+  - url: https://github.com/pvginkel/esp-libs
+    shared: true
+
+capabilities:
+  github: rw
+
+# ESP-IDF 5.5.3 — the same version this repo's Jenkinsfile pins (espressif/idf:v5.5.3).
+# The catalog entry carries the sidecar's memory limit and its ~/.ccache home overlay, so
+# neither is restated here.
+tools:
+  - use: esp-idf
+
+setup:
+  - kc project setup
+
+preamble:
+  instructions: |
+    ESP32-S3 intercom firmware. Two hardware revisions are built from one tree, selected
+    with -DHARDWARE_VERSION=1|2; `kc project build` builds both, into build/v1 and build/v2.
+
+    /work/esp-libs is a shared, reference-only checkout that the build depends on. Never
+    write to it — it is mounted from a clone every environment of this project shares.
+
+    Every command run through `cexec esp-idf` prints an ESP-IDF activation banner before
+    its own output — three Python-detection lines on stdout and an activation block on
+    stderr. That is the toolchain, not a fault; filter it with tail/grep when parsing
+    a command's output.
+
+    A build rewrites the tracked dependencies.lock (an IDF version bump plus a full
+    re-resolution of the path components). Do not commit that rewrite; `git checkout --
+    dependencies.lock` after building. Expect the file to show modified after a clean build.
+
+    Flashing and OTA upload (scripts/upload.sh, scripts/upload.ps1, tools/dev-upload) are
+    CI's and a hand step from a machine with the hardware — not part of this environment.

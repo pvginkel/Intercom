@@ -35,9 +35,9 @@ preamble:
     stderr. That is the toolchain, not a fault; filter it with tail/grep when parsing
     a command's output.
 
-    A build rewrites the tracked dependencies.lock (an IDF version bump plus a full
-    re-resolution of the path components). Do not commit that rewrite; `git checkout --
-    dependencies.lock` after building. Expect the file to show modified after a clean build.
+    `dependencies.lock` is gitignored, not tracked: the component manager rewrites it on
+    every build that resolves dependencies (registry components re-resolve, path
+    components record their local paths), and a build changes nothing tracked.
 
     Flashing and OTA upload (scripts/upload.sh, scripts/upload.ps1, tools/dev-upload) are
     CI's and a hand step from a machine with the hardware — not part of this environment.

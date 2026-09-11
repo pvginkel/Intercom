@@ -19,9 +19,6 @@ capabilities:
 tools:
   - use: esp-idf
 
-setup:
-  - kc project setup
-
 preamble:
   instructions: |
     ESP32-S3 intercom firmware. Two hardware revisions are built from one tree, selected

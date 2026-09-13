@@ -18,6 +18,8 @@ capabilities:
 # neither is restated here.
 tools:
   - use: esp-idf
+  # native provides clang-format for the lint gate's formatting check over main/.
+  - use: native
 
 preamble:
   instructions: |

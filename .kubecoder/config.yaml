@@ -20,6 +20,8 @@ tools:
   - use: esp-idf
   # native provides clang-format for the lint gate's formatting check over main/.
   - use: native
+  # arch-validate, the architecture artifact's lint gate.
+  - use: aac-tools
 
 preamble:
   instructions: |

@@ -24,13 +24,12 @@ projects:
     # hardware; there is no host-side suite to run and none is stubbed out here.
 
     # The architecture-as-code artifact has a checker, and it is the check CI runs
-    # (Jenkinsfile.architecture). Note it is a network call: arch-validate.py POSTs to
-    # https://architecture.webathome.org/api/validate, so this gate needs outbound HTTPS and
-    # fails with exit 2 (not 1) if the service is unreachable. It runs in the dev container,
-    # not a sidecar — the script is stdlib-only Python 3.
+    # (Jenkinsfile.architecture), from the aac-tools toolchain. Note it is a network call:
+    # arch-validate POSTs to https://architecture.webathome.org/api/validate, so this gate
+    # needs outbound HTTPS and fails with exit 2 (not 1) if the service is unreachable.
     #
     # The second step checks every C/C++ source and header under main/ against the repo's own
     # main/.clang-format; --dry-run --Werror fails on any file clang-format would change.
     lint:
-      - ./scripts/arch-validate.py docs/architecture/*.yaml
+      - cexec aac-tools arch-validate docs/architecture/*.yaml
       - cexec native sh -c 'find main \( -name "*.c" -o -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 | xargs -0 clang-format --dry-run --Werror'
